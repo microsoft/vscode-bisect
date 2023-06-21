@@ -8,13 +8,13 @@ Allows to bisect released VSCode web and desktop insider builds for issues simil
 ## Usage
 
 ```sh
-npx vscode-bisect [ARGS]
+npx @vscode/vscode-bisect [ARGS]
 ```
 
 ## Help
 
 ```sh
-npx vscode-bisect --help
+npx @vscode/vscode-bisect --help
 ```
 
-`vscode-bisect` is meant to be only used as a command line tool.
+`@vscode/vscode-bisect` is meant to be only used as a command line tool.
