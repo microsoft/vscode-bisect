@@ -3,14 +3,14 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { get } from 'https';
+import { https } from 'follow-redirects';
 import { createWriteStream, promises } from 'fs';
 import { dirname } from 'path';
 import { OutgoingHttpHeaders } from 'http';
 
 export function jsonGet<T>(url: string, headers?: OutgoingHttpHeaders): Promise<T> {
     return new Promise((resolve, reject) => {
-        get(url, { headers }, res => {
+        https.get(url, { headers }, res => {
             if (res.statusCode !== 200) {
                 reject(`Failed to get response from update server (code: ${res.statusCode}, message: ${res.statusMessage})`);
                 return;
@@ -32,7 +32,7 @@ export async function fileGet(url: string, path: string): Promise<void> {
 
     // Download
     return new Promise((resolve, reject) => {
-        const request = get(url, res => {
+        const request = https.get(url, res => {
             const outStream = createWriteStream(path);
             outStream.on('close', () => resolve());
             outStream.on('error', reject);
