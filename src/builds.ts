@@ -70,7 +70,9 @@ class Builds {
     }
 
     private async fetchAllBuilds(runtime: Runtime): Promise<IBuild[]> {
-        const commits = await jsonGet<Array<string>>(`https://update.code.visualstudio.com/api/commits/insider/${this.getBuildApiName(runtime)}?released=false`);
+        const url = `https://update.code.visualstudio.com/api/commits/insider/${this.getBuildApiName(runtime)}?released=false`;
+        console.log(`${chalk.gray('[build]')} fetching all builds from ${chalk.green(url)}...`);
+        const commits = await jsonGet<Array<string>>(url);
 
         return commits.map(commit => ({ commit, runtime }));
     }
@@ -114,16 +116,17 @@ class Builds {
 
         const path = join(getBuildPath(commit), buildName);
 
-        if (LOGGER.verbose) {
-            console.log(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
-        }
-
         if (await exists(path)) {
+            if (LOGGER.verbose) {
+                console.log(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
+            }
+
             return; // assume the build is cached
         }
 
         // Download
         const url = `https://update.code.visualstudio.com/commit:${commit}/${this.getPlatformName(runtime)}/insider`;
+        console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
         await fileGet(url, path);
 
         // Unzip
