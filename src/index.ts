@@ -54,6 +54,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
     if (opts.reset) {
         try {
+            console.log(`${chalk.gray('[build]')} deleting cache directory ${chalk.green(ROOT)}`);
             rmSync(ROOT, { recursive: true });
         } catch (error) { }
     }
