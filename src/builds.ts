@@ -123,8 +123,7 @@ class Builds {
         }
 
         // Download
-        const url = `https://az764295.vo.msecnd.net/insider/${commit}/${buildName}`;
-        console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
+        const url = `https://update.code.visualstudio.com/commit:${commit}/${this.getPlatformName(runtime)}/insider`;
         await fileGet(url, path);
 
         // Unzip
@@ -149,9 +148,11 @@ class Builds {
             case Runtime.WebRemote:
                 switch (platform) {
                     case Platform.MacOSX64:
-                    case Platform.MacOSArm:
                         return 'vscode-server-darwin-x64-web.zip';
+                    case Platform.MacOSArm:
+                        return 'vscode-server-darwin-arm64-web.zip';
                     case Platform.LinuxX64:
+                        return 'vscode-server-linux-arm64-web.tar.gz';
                     case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web.tar.gz';
                     case Platform.WindowsX64:
@@ -188,9 +189,11 @@ class Builds {
             case Runtime.WebRemote:
                 switch (platform) {
                     case Platform.MacOSX64:
-                    case Platform.MacOSArm:
                         return 'vscode-server-darwin-x64-web';
+                    case Platform.MacOSArm:
+                        return 'vscode-server-darwin-arm64-web';
                     case Platform.LinuxX64:
+                        return 'vscode-server-linux-arm64-web';
                     case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web';
                     case Platform.WindowsX64:
@@ -214,6 +217,42 @@ class Builds {
                         const buildMeta = await this.fetchBuildMeta({ runtime, commit });
 
                         return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}` : `VSCode-win32-arm64-${buildMeta.productVersion}`;
+                    }
+                }
+        }
+    }
+
+    private getPlatformName(runtime: Runtime): string {
+        switch (runtime) {
+            case Runtime.WebLocal:
+            case Runtime.WebRemote:
+                switch (platform) {
+                    case Platform.MacOSX64:
+                        return 'server-darwin-web';
+                    case Platform.MacOSArm:
+                        return 'server-darwin-arm64-web';
+                    case Platform.LinuxX64:
+                        return 'server-linux-x64-web';
+                    case Platform.LinuxArm:
+                        return 'server-linux-arm64-web';
+                    case Platform.WindowsX64:
+                    case Platform.WindowsArm:
+                        return 'server-win32-x64-web';
+                }
+
+            case Runtime.DesktopLocal:
+                switch (platform) {
+                    case Platform.MacOSX64:
+                    case Platform.MacOSArm:
+                        return 'darwin-universal';
+                    case Platform.LinuxX64:
+                        return 'linux-x64';
+                    case Platform.LinuxArm:
+                        return 'linux-arm64';
+                    case Platform.WindowsX64:
+                        return 'win32-x64-archive';
+                    case Platform.WindowsArm: {
+                        return 'win32-arm64-archive';
                     }
                 }
         }
