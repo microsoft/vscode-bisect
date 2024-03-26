@@ -42,7 +42,7 @@ interface IWebInstance extends IInstance {
 
 class Launcher {
 
-    private static readonly WEB_AVAILABLE_REGEX = new RegExp('Web UI available at (http://localhost:8000/\\?tkn=.+)');
+    private static readonly WEB_AVAILABLE_REGEX = new RegExp('Web UI available at (http://localhost:8000/?\\?tkn=.+)');
 
     static {
 
