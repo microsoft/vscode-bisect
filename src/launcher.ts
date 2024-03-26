@@ -182,8 +182,6 @@ class Launcher {
                 const url = matches?.[1];
                 if (url) {
                     resolve({ url, stop });
-                } else {
-                    // console.log(`did not match`);
                 }
             });
 
