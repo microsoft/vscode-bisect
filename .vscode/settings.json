@@ -6,6 +6,20 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
+        "out": true,
+        ".vscode-test": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
         "out": true
-    }
+    },
+    "typescript.tsc.autoDetect": "off",
+    "git.branchProtection": [
+        "main"
+    ],
+    "git.branchProtectionPrompt": "alwaysCommitToNewBranch",
+    "git.branchRandomName.enable": true,
+    "git.pullBeforeCheckout": true,
 }
