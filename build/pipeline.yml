@@ -27,10 +27,10 @@ extends:
       - name: vscode-bisect
 
         buildSteps:
-          - script: yarn install --frozen-lockfile
+          - script: npm ci
             displayName: Install dependencies
           
-          - script: yarn run build
+          - script: npm run build
             displayName: Build
 
         testPlatforms: []

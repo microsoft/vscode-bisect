@@ -2,6 +2,6 @@ src/
 .gitignore
 tsconfig.json
 **/*.js.map
-yarn.lock
+package-lock.json
 .vscode/
 build/

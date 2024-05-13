@@ -146,8 +146,12 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
             await bisecter.start(runtime, goodCommit, badCommit);
         }
     } catch (error) {
+        const packageJson = require('../package.json');
         console.log(`${chalk.red('[error]')} ${error}`);
-        console.log(`You can run ${chalk.green('vscode-bisect --verbose')} for more detailed output and ${chalk.green('vscode-bisect --reset')} for a fresh start without caches.`);
+        console.log(`${chalk.bold('Error Troubleshooting Guide:')}
+- run ${chalk.green('vscode-bisect --verbose')} for more detailed output
+- run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
+- run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);
         process.exit(1);
     }
 }
