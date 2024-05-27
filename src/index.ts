@@ -22,6 +22,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         good?: string;
         bad?: string;
         commit?: string;
+        releasedOnly?: boolean;
         verbose?: boolean;
         reset?: boolean;
         perf?: boolean | string;
@@ -35,6 +36,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
         .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
+        .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path')
         .option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`)
@@ -129,7 +131,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
         let commit: string | undefined;
         if (opts.commit) {
             if (opts.commit === 'latest') {
-                const allBuilds = await builds.fetchBuilds(runtime);
+                const allBuilds = await builds.fetchBuilds(runtime, undefined, undefined, opts.releasedOnly);
                 commit = allBuilds[0].commit;
             } else {
                 commit = opts.commit;
@@ -143,12 +145,12 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         // No commit provided: bisect commit ranges
         else {
-            await bisecter.start(runtime, goodCommit, badCommit);
+            await bisecter.start(runtime, goodCommit, badCommit, opts.releasedOnly);
         }
     } catch (error) {
         const packageJson = require('../package.json');
-        console.log(`${chalk.red('[error]')} ${error}`);
-        console.log(`${chalk.bold('Error Troubleshooting Guide:')}
+        console.log(`${chalk.red('\n[error]')} ${error}`);
+        console.log(`\n${chalk.bold('Error Troubleshooting Guide:')}
 - run ${chalk.green('vscode-bisect --verbose')} for more detailed output
 - run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
 - run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);

@@ -21,10 +21,10 @@ interface IBuildMetadata {
 
 class Builds {
 
-    async fetchBuilds(runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string): Promise<IBuild[]> {
+    async fetchBuilds(runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<IBuild[]> {
 
         // Fetch all released insider builds
-        const allBuilds = await this.fetchAllBuilds(runtime);
+        const allBuilds = await this.fetchAllBuilds(runtime, releasedOnly);
 
         let goodCommitIndex = allBuilds.length - 1;  // last build (oldest) by default
         let badCommitIndex = 0;                      // first build (newest) by default
@@ -32,7 +32,7 @@ class Builds {
         if (typeof goodCommit === 'string') {
             const candidateGoodCommitIndex = this.indexOf(goodCommit, allBuilds);
             if (typeof candidateGoodCommitIndex !== 'number') {
-                throw new Error(`Provided good commit ${goodCommit} is not a released insiders build.`);
+                throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of insiders builds. Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
             }
 
             goodCommitIndex = candidateGoodCommitIndex;
@@ -41,14 +41,14 @@ class Builds {
         if (typeof badCommit === 'string') {
             const candidateBadCommitIndex = this.indexOf(badCommit, allBuilds);
             if (typeof candidateBadCommitIndex !== 'number') {
-                throw new Error(`Provided bad commit ${badCommit} is not a released insiders build.`);
+                throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of insiders builds. Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
             }
 
             badCommitIndex = candidateBadCommitIndex;
         }
 
         if (badCommitIndex >= goodCommitIndex) {
-            throw new Error(`Provided bad commit ${badCommit} cannot be older or same as good commit ${goodCommit}.`);
+            throw new Error(`Provided bad commit ${chalk.green(badCommit)} cannot be older or same as good commit ${chalk.green(goodCommit)}.`);
         }
 
         // Build a range based on the bad and good commits if any
@@ -69,8 +69,8 @@ class Builds {
         return undefined;
     }
 
-    private async fetchAllBuilds(runtime: Runtime): Promise<IBuild[]> {
-        const url = `https://update.code.visualstudio.com/api/commits/insider/${this.getBuildApiName(runtime)}?released=false`;
+    private async fetchAllBuilds(runtime: Runtime, releasedOnly = false): Promise<IBuild[]> {
+        const url = `https://update.code.visualstudio.com/api/commits/insider/${this.getBuildApiName(runtime)}?released=${releasedOnly}`;
         console.log(`${chalk.gray('[build]')} fetching all builds from ${chalk.green(url)}...`);
         const commits = await jsonGet<Array<string>>(url);
 

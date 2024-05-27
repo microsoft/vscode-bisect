@@ -23,10 +23,10 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start(runtime: Runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string): Promise<void> {
+    async start(runtime: Runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<void> {
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds(runtime, goodCommit, badCommit);
+        const buildsRange = await builds.fetchBuilds(runtime, goodCommit, badCommit, releasedOnly);
 
         console.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 
@@ -92,9 +92,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
 
 `);
         } else if (badBuild) {
-            console.log(`${chalk.gray('[build]')} ${chalk.red('All builds are bad!')}`);
+            console.log(`${chalk.gray('[build]')} ${chalk.red('All builds are bad!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
         } else if (goodBuild) {
-            console.log(`${chalk.gray('[build]')} ${chalk.green('All builds are good!')}`);
+            console.log(`${chalk.gray('[build]')} ${chalk.green('All builds are good!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
         } else {
             console.log(`${chalk.gray('[build]')} ${chalk.red('No builds bisected. Bisect needs at least 2 builds from "main" branch to work.')}`);
         }
