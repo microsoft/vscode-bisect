@@ -43,7 +43,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-v, --verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
-Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 released insider builds.
+Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 insider builds. Use '--releasedOnly' to only consider released builds and thus allow for older builds to be tested.
 
 Builds are stored and cached on disk in ${BUILD_FOLDER}
     `);
