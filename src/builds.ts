@@ -143,7 +143,9 @@ class Builds {
         if (expectedSHA256 !== computedSHA256) {
             throw new Error(`SHA256 hash of downloaded file does not match the expected hash. Expected: ${expectedSHA256}, Got: ${computedSHA256}`);
         } else {
-            console.log(`${chalk.gray('[build]')} Expected SHA256 checksum matches downloaded build ${chalk.green('✔︎')}`);
+            if (LOGGER.verbose) {
+                console.log(`${chalk.gray('[build]')} expected SHA256 checksum matches with download ${chalk.green('✔︎')}`);
+            }
         }
 
         // Unzip
