@@ -9,7 +9,7 @@ import { rmSync, truncateSync } from 'fs';
 import prompts from 'prompts';
 import { bisecter } from './bisect';
 import { git } from './git';
-import { BUILD_FOLDER, CONFIG, LOGGER, ROOT, Runtime } from './constants';
+import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants';
 import { launcher } from './launcher';
 import { builds } from './builds';
 import { resolve } from 'path';
@@ -148,12 +148,8 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
             await bisecter.start(runtime, goodCommit, badCommit, opts.releasedOnly);
         }
     } catch (error) {
-        const packageJson = require('../package.json');
         console.log(`${chalk.red('\n[error]')} ${error}`);
-        console.log(`\n${chalk.bold('Error Troubleshooting Guide:')}
-- run ${chalk.green('vscode-bisect --verbose')} for more detailed output
-- run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
-- run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);
+        logTroubleshoot();
         process.exit(1);
     }
 }

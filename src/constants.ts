@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import chalk from 'chalk';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -70,4 +71,13 @@ export const LOGGER = {
 export const CONFIG = {
     performance: false as boolean | string,
     token: undefined as string | undefined,
+}
+
+export function logTroubleshoot(): void {
+    const packageJson = require('../package.json');
+
+    console.log(`\n${chalk.bold('Error Troubleshooting Guide:')}
+- run ${chalk.green('vscode-bisect --verbose')} for more detailed output
+- run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
+- run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);
 }

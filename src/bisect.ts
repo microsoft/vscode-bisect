@@ -7,7 +7,7 @@ import prompts from 'prompts';
 import chalk from 'chalk';
 import open from 'open';
 import { builds, IBuild } from './builds';
-import { Runtime } from './constants';
+import { logTroubleshoot, Runtime } from './constants';
 import { launcher } from './launcher';
 
 enum BisectResponse {
@@ -116,29 +116,53 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         }
     }
 
-    private async tryBuild(build: IBuild): Promise<BisectResponse> {
-        const instance = await launcher.launch(build);
+    private async tryBuild(build: IBuild, options?: { forceReDownload: boolean }): Promise<BisectResponse> {
+        try {
+            const instance = await launcher.launch(build, options);
 
-        const response = await prompts([
-            {
-                type: 'select',
-                name: 'status',
-                message: `Is ${build.commit} good or bad?`,
-                choices: [
-                    { title: 'Good', value: 'good' },
-                    { title: 'Bad', value: 'bad' },
-                    { title: 'Retry', value: 'retry' }
-                ]
+            const response = await prompts([
+                {
+                    type: 'select',
+                    name: 'status',
+                    message: `Is ${build.commit} good or bad?`,
+                    choices: [
+                        { title: 'Good', value: 'good' },
+                        { title: 'Bad', value: 'bad' },
+                        { title: 'Retry', value: 'retry' }
+                    ]
+                }
+            ]);
+
+            await instance.stop();
+
+            if (response.status === 'retry') {
+                return this.tryBuild(build);
             }
-        ]);
 
-        await instance.stop();
+            return response.status === 'good' ? BisectResponse.Good : response.status === 'bad' ? BisectResponse.Bad : BisectResponse.Quit;
+        } catch (error) {
+            console.log(`${chalk.red('\n[error]')} ${error}\n`);
 
-        if (response.status === 'retry') {
-            return this.tryBuild(build);
+            const response = await prompts([
+                {
+                    type: 'select',
+                    name: 'status',
+                    message: `Would you like to retry?`,
+                    choices: [
+                        { title: 'Yes', value: 'yes' },
+                        { title: 'No', value: 'no' }
+                    ]
+                }
+            ]);
+
+            if (response.status === 'yes') {
+                return this.tryBuild(build, { forceReDownload: true });
+            }
+
+            logTroubleshoot();
+
+            return BisectResponse.Quit;
         }
-
-        return response.status === 'good' ? BisectResponse.Good : response.status === 'bad' ? BisectResponse.Bad : BisectResponse.Quit;
     }
 }
 
