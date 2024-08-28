@@ -8,16 +8,17 @@ import { dirname, join } from 'path';
 import { rmSync } from 'fs';
 import { LOGGER, Platform, platform, Runtime } from './constants';
 import { fileGet, jsonGet } from './fetch';
-import { exists, getBuildPath, unzip } from './files';
+import { computeSHA256, exists, getBuildPath, unzip } from './files';
 
 export interface IBuild {
-    runtime: Runtime;
-    commit: string;
+    readonly runtime: Runtime;
+    readonly commit: string;
 }
 
 interface IBuildMetadata {
-    url: string;
-    productVersion: string;
+    readonly url: string;
+    readonly productVersion: string;
+    readonly sha256hash: string;
 }
 
 class Builds {
@@ -135,6 +136,15 @@ class Builds {
         const url = `https://update.code.visualstudio.com/commit:${commit}/${this.getPlatformName(runtime)}/insider`;
         console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
         await fileGet(url, path);
+
+        // Validate SHA256 Checksum
+        const expectedSHA256 = (await this.fetchBuildMeta({ runtime, commit })).sha256hash;
+        const computedSHA256 = await computeSHA256(path);
+        if (expectedSHA256 !== computedSHA256) {
+            throw new Error(`SHA256 hash of downloaded file does not match the expected hash. Expected: ${expectedSHA256}, Got: ${computedSHA256}`);
+        } else {
+            console.log(`${chalk.gray('[build]')} Expected SHA256 checksum matches downloaded build ${chalk.green('✔︎')}`);
+        }
 
         // Unzip
         let destination: string;

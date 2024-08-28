@@ -6,6 +6,7 @@
 import { spawnSync } from 'child_process';
 import { mkdirSync, promises, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { createHash } from 'crypto';
 import { BUILD_FOLDER, Platform, platform } from './constants';
 import { unzipSync } from 'fflate';
 
@@ -58,4 +59,10 @@ export async function unzip(source: string, destination: string): Promise<void> 
 
         spawnSync('tar', ['-xzf', source, '-C', destination]);
     }
+}
+
+export async function computeSHA256(path: string): Promise<string> {
+    const fileBuffer = await promises.readFile(path);
+
+    return createHash('sha256').update(fileBuffer).digest('hex');
 }
