@@ -53,11 +53,11 @@ class Launcher {
         mkdirSync(DATA_FOLDER, { recursive: true });
     }
 
-    async launch(build: IBuild): Promise<IInstance> {
+    async launch(build: IBuild, options?: { forceReDownload: boolean }): Promise<IInstance> {
 
         // Install (unless web remote)
         if (build.runtime !== Runtime.WebRemote) {
-            await builds.installBuild(build);
+            await builds.installBuild(build, options);
         }
 
         // Launch according to runtime

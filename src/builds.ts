@@ -5,6 +5,7 @@
 
 import chalk from 'chalk';
 import { dirname, join } from 'path';
+import { rmSync } from 'fs';
 import { LOGGER, Platform, platform, Runtime } from './constants';
 import { fileGet, jsonGet } from './fetch';
 import { exists, getBuildPath, unzip } from './files';
@@ -111,17 +112,23 @@ class Builds {
         }
     }
 
-    async installBuild({ runtime, commit }: IBuild): Promise<void> {
+    async installBuild({ runtime, commit }: IBuild, options?: { forceReDownload: boolean }): Promise<void> {
         const buildName = await this.getBuildArchiveName({ runtime, commit });
 
         const path = join(getBuildPath(commit), buildName);
 
-        if (await exists(path)) {
+        const pathExists = await exists(path);
+        if (pathExists && !options?.forceReDownload) {
             if (LOGGER.verbose) {
                 console.log(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
             }
 
             return; // assume the build is cached
+        }
+
+        if (pathExists && options?.forceReDownload) {
+            console.log(`${chalk.gray('[build]')} deleting ${chalk.green(getBuildPath(commit))} and retrying download`);
+            rmSync(getBuildPath(commit), { recursive: true });
         }
 
         // Download
@@ -246,8 +253,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
+                        return 'darwin';
                     case Platform.MacOSArm:
-                        return 'darwin-universal';
+                        return 'darwin-arm64';
                     case Platform.LinuxX64:
                         return 'linux-x64';
                     case Platform.LinuxArm:
