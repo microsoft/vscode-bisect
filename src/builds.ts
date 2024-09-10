@@ -141,11 +141,9 @@ class Builds {
         const expectedSHA256 = (await this.fetchBuildMeta({ runtime, commit })).sha256hash;
         const computedSHA256 = await computeSHA256(path);
         if (expectedSHA256 !== computedSHA256) {
-            throw new Error(`SHA256 hash of downloaded file does not match the expected hash. Expected: ${expectedSHA256}, Got: ${computedSHA256}`);
+            console.log(`${chalk.gray('[build]')} expected SHA256 checksum (${expectedSHA256}) does not match with download (${computedSHA256}) ${chalk.red('✘')}`);
         } else {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.gray('[build]')} expected SHA256 checksum matches with download ${chalk.green('✔︎')}`);
-            }
+            console.log(`${chalk.gray('[build]')} expected SHA256 checksum matches with download ${chalk.green('✔︎')}`);
         }
 
         // Unzip

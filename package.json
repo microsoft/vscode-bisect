@@ -1,6 +1,6 @@
 {
     "name": "@vscode/vscode-bisect",
-    "version": "0.4.9",
+    "version": "0.4.10",
     "description": "Bisect released VS Code Insider builds to find bugs or performance issues similar to what git bisect supports.",
     "repository": {
         "type": "git",
