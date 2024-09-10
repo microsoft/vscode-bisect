@@ -1,6 +1,6 @@
 {
     "name": "@vscode/vscode-bisect",
-    "version": "0.4.10",
+    "version": "0.5.0",
     "description": "Bisect released VS Code Insider builds to find bugs or performance issues similar to what git bisect supports.",
     "repository": {
         "type": "git",
@@ -32,6 +32,7 @@
         "fflate": "^0.8.2",
         "follow-redirects": "^1.15.6",
         "open": "^8.4.0",
+        "progress": "^2.0.3",
         "prompts": "^2.4.2",
         "simple-git": "^3.16.0",
         "tree-kill": "^1.2.2",
@@ -40,6 +41,7 @@
     "devDependencies": {
         "@types/follow-redirects": "^1.x",
         "@types/node": "20.x",
+        "@types/progress": "^2.0.7",
         "@types/prompts": "^2.x",
         "typescript": "5.x"
     }
