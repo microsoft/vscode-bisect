@@ -17,11 +17,18 @@ export interface IBuild {
 
 interface IBuildMetadata {
     readonly url: string;
+    readonly version: string;
     readonly productVersion: string;
     readonly sha256hash: string;
 }
 
 class Builds {
+
+    async fetchBuildByVersion(runtime = Runtime.WebLocal, version: string): Promise<IBuild> {
+        const meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}-insider/${this.getBuildApiName(runtime)}/insider`);
+
+        return { runtime, commit: meta.version };
+    }
 
     async fetchBuilds(runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<IBuild[]> {
 
