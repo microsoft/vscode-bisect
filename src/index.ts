@@ -22,6 +22,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         good?: string;
         bad?: string;
         commit?: string;
+        version?: string;
         releasedOnly?: boolean;
         verbose?: boolean;
         reset?: boolean;
@@ -36,6 +37,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
         .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
+        .option('--version <version>', 'version of a specific insiders build to test (supercedes -g, -b and -c)')
         .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path')
@@ -82,7 +84,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
     let badCommit = opts.bad;
     let goodCommit = opts.good;
-    if (!opts.commit) {
+    if (!opts.commit && !opts.version) {
         if (!badCommit) {
             const response = await prompts([
                 {
@@ -129,7 +131,10 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
         }
 
         let commit: string | undefined;
-        if (opts.commit) {
+        if (opts.version) {
+            const build = await builds.fetchBuildByVersion(runtime, opts.version);
+            commit = build.commit;
+        } else if (opts.commit) {
             if (opts.commit === 'latest') {
                 const allBuilds = await builds.fetchBuilds(runtime, undefined, undefined, opts.releasedOnly);
                 commit = allBuilds[0].commit;
