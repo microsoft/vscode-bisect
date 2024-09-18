@@ -37,7 +37,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
         .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
-        .option('--version <version>', 'version of a specific insiders build to test (supercedes -g, -b and -c)')
+        .option('--version <major.minor.patch>', 'version of a specific insiders build to test, for example 1.93.1 (supercedes -g, -b and -c)')
         .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path')
