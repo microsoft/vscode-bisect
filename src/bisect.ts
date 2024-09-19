@@ -23,7 +23,10 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start(runtime: Runtime = Runtime.WebLocal, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<void> {
+    async start(runtime: Runtime = Runtime.WebLocal, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
+
+        // Resolve commits from input
+        const { goodCommit, badCommit } = await this.resolveCommits(runtime, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
         const buildsRange = await builds.fetchBuilds(runtime, goodCommit, badCommit, releasedOnly);
@@ -65,6 +68,31 @@ class Bisecter {
         if (!quit) {
             return this.finishBisect(badBuild, goodBuild);
         }
+    }
+
+    private async resolveCommits(runtime: Runtime, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
+        return {
+            goodCommit: await this.resolveCommit(runtime, goodCommitOrVersion),
+            badCommit: await this.resolveCommit(runtime, badCommitOrVersion)
+        };
+    }
+
+    private async resolveCommit(runtime: Runtime, commitOrVersion?: string) {
+        if (!commitOrVersion) {
+            return undefined;
+        }
+
+        if (/^\d+\.\d+$/.test(commitOrVersion)) {
+            const commit = (await builds.fetchBuildByVersion(runtime, commitOrVersion)).commit;
+            console.log(`${chalk.gray('[build]')} latest insiders build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
+            return commit;
+        }
+
+        if (/^[0-9a-f]{40}$/i.test(commitOrVersion)) {
+            return commitOrVersion;
+        }
+
+        throw new Error(`Invalid commit or version format. Please provide a valid Git commit hash or version in the format of ${chalk.green('major.minor')}.`);
     }
 
     private async finishBisect(badBuild: IBuild | undefined, goodBuild: IBuild | undefined): Promise<void> {

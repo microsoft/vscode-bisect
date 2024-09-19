@@ -25,7 +25,7 @@ interface IBuildMetadata {
 class Builds {
 
     async fetchBuildByVersion(runtime = Runtime.WebLocal, version: string): Promise<IBuild> {
-        const meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}-insider/${this.getBuildApiName(runtime)}/insider`);
+        const meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName(runtime)}/insider?released=true`);
 
         return { runtime, commit: meta.version };
     }
@@ -41,7 +41,11 @@ class Builds {
         if (typeof goodCommit === 'string') {
             const candidateGoodCommitIndex = this.indexOf(goodCommit, allBuilds);
             if (typeof candidateGoodCommitIndex !== 'number') {
-                throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of insiders builds. Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
+                if (releasedOnly) {
+                    throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of insiders builds. It is either invalid or too old.`);
+                } else {
+                    return this.fetchBuilds(runtime, goodCommit, badCommit, true);
+                }
             }
 
             goodCommitIndex = candidateGoodCommitIndex;
@@ -50,7 +54,11 @@ class Builds {
         if (typeof badCommit === 'string') {
             const candidateBadCommitIndex = this.indexOf(badCommit, allBuilds);
             if (typeof candidateBadCommitIndex !== 'number') {
-                throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of insiders builds. Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
+                if (releasedOnly) {
+                    throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of insiders builds. It is either invalid or too old.`);
+                } else {
+                    return this.fetchBuilds(runtime, goodCommit, badCommit, true);
+                }
             }
 
             badCommitIndex = candidateBadCommitIndex;
