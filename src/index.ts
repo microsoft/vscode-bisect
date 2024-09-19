@@ -37,7 +37,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
         .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
-        .option('-v, --version <major.minor.patch>', 'version of a specific insiders build to test, for example 1.93.1 (supercedes -g, -b and -c)')
+        .option('-v, --version <major.minor>', 'version of a specific insiders build to test, for example 1.93 (supercedes -g, -b and -c)')
         .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
@@ -132,6 +132,10 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         let commit: string | undefined;
         if (opts.version) {
+            if (!/^\d+\.\d+$/.test(opts.version)) {
+                throw new Error(`Invalid version format. Please provide a version in the format of ${chalk.green('major.minor')}, for example ${chalk.green('1.93')}.`);
+            }
+
             const build = await builds.fetchBuildByVersion(runtime, opts.version);
             commit = build.commit;
         } else if (opts.commit) {
