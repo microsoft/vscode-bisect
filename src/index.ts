@@ -37,12 +37,12 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
         .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
-        .option('--version <major.minor.patch>', 'version of a specific insiders build to test, for example 1.93.1 (supercedes -g, -b and -c)')
+        .option('-v, --version <major.minor.patch>', 'version of a specific insiders build to test, for example 1.93.1 (supercedes -g, -b and -c)')
         .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
-        .option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path')
-        .option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`)
-        .option('-v, --verbose', 'logs verbose output to the console when errors occur');
+        .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
+        .addOption(new Option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`).hideHelp())
+        .option('--verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
 Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 insider builds. Use '--releasedOnly' to only consider released builds and thus allow for older builds to be tested.
