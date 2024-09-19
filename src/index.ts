@@ -34,10 +34,10 @@ module.exports = async function (argv: string[]): Promise<void> {
 
     program
         .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
-        .option('-g, --good <commit>', 'commit hash of a released insiders build that does not reproduce the issue')
-        .option('-b, --bad <commit>', 'commit hash of a released insiders build that reproduces the issue')
-        .option('-c, --commit <commit|latest>', 'commit hash of a specific insiders build to test or "latest" released build (supercedes -g and -b)')
-        .option('-v, --version <major.minor>', 'version of a specific insiders build to test, for example 1.93 (supercedes -g, -b and -c)')
+        .option('-g, --good <commit|version>', 'commit hash or version of a published insiders build that does not reproduce the issue')
+        .option('-b, --bad <commit|version>', 'commit hash or version of a published insiders build that reproduces the issue')
+        .option('-c, --commit <commit|latest>', 'commit hash of a published insiders build to test or "latest" released build (supercedes -g and -b)')
+        .option('-v, --version <major.minor>', 'version of a published insiders build to test, for example 1.93 (supercedes -g, -b and -c)')
         .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
@@ -82,40 +82,40 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
         }
     }
 
-    let badCommit = opts.bad;
-    let goodCommit = opts.good;
+    let badCommitOrVersion = opts.bad;
+    let goodCommitOrVersion = opts.good;
     if (!opts.commit && !opts.version) {
-        if (!badCommit) {
+        if (!badCommitOrVersion) {
             const response = await prompts([
                 {
                     type: 'text',
                     name: 'bad',
                     initial: '',
-                    message: 'Commit of released insiders build that reproduces the issue (leave empty to pick the latest build)',
+                    message: 'Commit or version of released insiders build that reproduces the issue (leave empty to pick the latest build)',
                 }
             ]);
 
             if (typeof response.bad === 'undefined') {
                 process.exit();
             } else if (response.bad) {
-                badCommit = response.bad;
+                badCommitOrVersion = response.bad;
             }
         }
 
-        if (!goodCommit) {
+        if (!goodCommitOrVersion) {
             const response = await prompts([
                 {
                     type: 'text',
                     name: 'good',
                     initial: '',
-                    message: 'Commit of released insiders build that does not reproduce the issue (leave empty to pick the oldest build)',
+                    message: 'Commit or version of released insiders build that does not reproduce the issue (leave empty to pick the oldest build)',
                 }
             ]);
 
             if (typeof response.good === 'undefined') {
                 process.exit();
             } else if (response.good) {
-                goodCommit = response.good;
+                goodCommitOrVersion = response.good;
             }
         }
     }
@@ -154,7 +154,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         // No commit provided: bisect commit ranges
         else {
-            await bisecter.start(runtime, goodCommit, badCommit, opts.releasedOnly);
+            await bisecter.start(runtime, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
         }
     } catch (error) {
         console.log(`${chalk.red('\n[error]')} ${error}`);

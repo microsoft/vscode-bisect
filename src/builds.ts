@@ -25,7 +25,7 @@ interface IBuildMetadata {
 class Builds {
 
     async fetchBuildByVersion(runtime = Runtime.WebLocal, version: string): Promise<IBuild> {
-        const meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName(runtime)}/insider`);
+        const meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName(runtime)}/insider?released=true`);
 
         return { runtime, commit: meta.version };
     }
@@ -44,7 +44,6 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of insiders builds. It is either invalid or too old.`);
                 } else {
-                    console.log(`${chalk.gray('[build]')} provided good commit ${chalk.green(goodCommit)} was not found. Trying again with released builds only to support older builds.`);
                     return this.fetchBuilds(runtime, goodCommit, badCommit, true);
                 }
             }
@@ -58,7 +57,6 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of insiders builds. It is either invalid or too old.`);
                 } else {
-                    console.log(`${chalk.gray('[build]')} provided bad commit ${chalk.green(badCommit)} was not found. Trying again with released builds only to support older builds.`);
                     return this.fetchBuilds(runtime, goodCommit, badCommit, true);
                 }
             }
