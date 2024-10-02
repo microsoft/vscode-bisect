@@ -148,15 +148,14 @@ class Builds {
         }
 
         // Download
-        const url = `https://update.code.visualstudio.com/commit:${commit}/${this.getPlatformName(runtime)}/insider`;
+        const { url, sha256hash: expectedSHA256 } = await this.fetchBuildMeta({ runtime, commit });
         console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
         await fileGet(url, path);
 
         // Validate SHA256 Checksum
-        const expectedSHA256 = (await this.fetchBuildMeta({ runtime, commit })).sha256hash;
         const computedSHA256 = await computeSHA256(path);
         if (expectedSHA256 !== computedSHA256) {
-            console.log(`${chalk.gray('[build]')} ${chalk.red('✘')} expected SHA256 checksum (${expectedSHA256}) does not match with download (${computedSHA256})`);
+            throw new Error(`${chalk.gray('[build]')} ${chalk.red('✘')} expected SHA256 checksum (${expectedSHA256}) does not match with download (${computedSHA256})`);
         } else {
             console.log(`${chalk.gray('[build]')} ${chalk.green('✔︎')} expected SHA256 checksum matches with download`);
         }
@@ -295,7 +294,7 @@ class Builds {
     }
 
     private fetchBuildMeta({ runtime, commit }: IBuild): Promise<IBuildMetadata> {
-        return jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/commit:${commit}/${this.getBuildApiName(runtime)}/insider`);
+        return jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/commit:${commit}/${this.getPlatformName(runtime)}/insider`);
     }
 
     async getBuildExecutable({ runtime, commit }: IBuild): Promise<string> {
