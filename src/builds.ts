@@ -6,6 +6,7 @@
 import chalk from 'chalk';
 import { dirname, join } from 'path';
 import { rmSync } from 'fs';
+import prompts from 'prompts';
 import { LOGGER, Platform, platform, Runtime } from './constants';
 import { fileGet, jsonGet } from './fetch';
 import { computeSHA256, exists, getBuildPath, unzip } from './files';
@@ -117,7 +118,7 @@ class Builds {
                     case Platform.MacOSArm:
                         return 'darwin-arm64';
                     case Platform.LinuxX64:
-                        return 'linux-x64';
+                        return 'linux-snap-x64';
                     case Platform.LinuxArm:
                         return 'linux-arm64';
                     case Platform.WindowsX64:
@@ -158,6 +159,23 @@ class Builds {
             throw new Error(`${chalk.gray('[build]')} ${chalk.red('✘')} expected SHA256 checksum (${expectedSHA256}) does not match with download (${computedSHA256})`);
         } else {
             console.log(`${chalk.gray('[build]')} ${chalk.green('✔︎')} expected SHA256 checksum matches with download`);
+        }
+
+        if (runtime === Runtime.DesktopLocal && platform === Platform.LinuxX64) {
+            console.log(`${chalk.gray('[build]')} manually install snap from ${chalk.green(path)} to proceed...`);
+            const response = await prompts([
+                {
+                    type: 'confirm',
+                    name: 'status',
+                    initial: false,
+                    message: `Is manual installation of snap from ${chalk.green(path)} complete ?`,
+                }
+            ]);
+            if (response.status) {
+                return;
+            } else {
+                throw new Error(`${chalk.gray('[build]')} ${chalk.red('✘')} cannot proceed without snap installed.`);
+            }
         }
 
         // Unzip
@@ -281,7 +299,7 @@ class Builds {
                     case Platform.MacOSArm:
                         return 'darwin-arm64';
                     case Platform.LinuxX64:
-                        return 'linux-x64';
+                        return 'linux-snap-x64';
                     case Platform.LinuxArm:
                         return 'linux-arm64';
                     case Platform.WindowsX64:

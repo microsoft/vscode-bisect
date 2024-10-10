@@ -222,7 +222,12 @@ class Launcher {
     }
 
     private async spawnBuild(build: IBuild): Promise<ChildProcessWithoutNullStreams> {
-        const executable = await this.getExecutablePath(build);
+        let executable: string;
+        if (platform === Platform.LinuxX64) {
+            executable = 'snap';
+        } else {
+            executable = await this.getExecutablePath(build);
+        }
         if (LOGGER.verbose) {
             console.log(`${chalk.gray('[build]')} starting build via ${chalk.green(executable)}...`);
         }
@@ -262,7 +267,11 @@ class Launcher {
 
 
             case Runtime.DesktopLocal:
-                return spawn(executable, args);
+                if (platform === Platform.LinuxX64) {
+                    return spawn(executable, ['run', 'code-insiders', '--extensions-dir', EXTENSIONS_FOLDER, '--skip-release-notes', '--disable-telemetry']);
+                } else {
+                    return spawn(executable, args);
+                }
         }
     }
 
