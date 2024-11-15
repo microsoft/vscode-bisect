@@ -37,7 +37,7 @@ export async function fileGet(url: string, path: string): Promise<void> {
         const request = https.get(url, res => {
             const totalSize = parseInt(res.headers['content-length']!, 10);
 
-            const bar = new ProgressBar(`${chalk.gray('[fetch]')} [:bar] :percent of ${(totalSize / 1024 / 1024).toFixed(2)} MB (:rate/MB/s)`, {
+            const bar = new ProgressBar(`${chalk.gray('[fetch]')} [:bar] :percent of ${(totalSize / 1024 / 1024).toFixed(2)} MB (:rate MB/s)`, {
                 complete: '=',
                 incomplete: ' ',
                 width: 30,
