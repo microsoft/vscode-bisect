@@ -49,7 +49,7 @@ class Bisecter {
 
         // Go over next builds for as long as we are not done...
         while (build = buildsRange[state.currentIndex]) {
-            const response = await this.tryBuild(build);
+            const response = await this.tryBuild(build, { isBisecting: true, forceReDownload: false });
             if (response === BisectResponse.Bad) {
                 badBuild = build;
             } else if (response === BisectResponse.Good) {
@@ -144,19 +144,29 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         }
     }
 
-    private async tryBuild(build: IBuild, options?: { forceReDownload: boolean }): Promise<BisectResponse> {
+    async tryBuild(build: IBuild, options: { forceReDownload: boolean, isBisecting: boolean }): Promise<BisectResponse> {
         try {
             const instance = await launcher.launch(build, options);
 
-            const response = await prompts([
+            const response = options.isBisecting ? await prompts([
                 {
                     type: 'select',
                     name: 'status',
-                    message: `Is ${build.commit} good or bad?`,
+                    message: `Is ${chalk.green(build.commit)} good or bad?`,
                     choices: [
                         { title: 'Good', value: 'good' },
                         { title: 'Bad', value: 'bad' },
                         { title: 'Retry', value: 'retry' }
+                    ]
+                }
+            ]) : await prompts([
+                {
+                    type: 'select',
+                    name: 'status',
+                    message: `Would you like to restart ${chalk.green(build.commit)}?`,
+                    choices: [
+                        { title: 'Yes', value: 'retry' },
+                        { title: 'No', value: 'no' }
                     ]
                 }
             ]);
@@ -164,7 +174,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
             await instance.stop();
 
             if (response.status === 'retry') {
-                return this.tryBuild(build);
+                return this.tryBuild(build, { forceReDownload: false, isBisecting: options.isBisecting });
             }
 
             return response.status === 'good' ? BisectResponse.Good : response.status === 'bad' ? BisectResponse.Bad : BisectResponse.Quit;
@@ -184,7 +194,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
             ]);
 
             if (response.status === 'yes') {
-                return this.tryBuild(build, { forceReDownload: true });
+                return this.tryBuild(build, { forceReDownload: true, isBisecting: options.isBisecting });
             }
 
             logTroubleshoot();

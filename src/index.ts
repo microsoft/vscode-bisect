@@ -149,7 +149,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         // Commit provided: launch only that commit
         if (commit) {
-            await launcher.launch({ commit, runtime });
+            await bisecter.tryBuild({ commit, runtime }, { isBisecting: false, forceReDownload: false });
         }
 
         // No commit provided: bisect commit ranges
