@@ -35,6 +35,11 @@ export async function fileGet(url: string, path: string): Promise<void> {
     // Download
     return new Promise((resolve, reject) => {
         const request = https.get(url, res => {
+            if (res.statusCode !== 200) {
+                reject(`Failed to download file from update server (code: ${res.statusCode}, message: ${res.statusMessage})`);
+                return;
+            }
+
             const totalSize = parseInt(res.headers['content-length']!, 10);
 
             const bar = new ProgressBar(`${chalk.gray('[fetch]')} [:bar] :percent of ${(totalSize / 1024 / 1024).toFixed(2)} MB (:rate MB/s)`, {

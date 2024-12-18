@@ -4,7 +4,7 @@
         "name": "Launch Program",
         "program": "${workspaceFolder}/bin/vscode-bisect",
         "request": "launch",
-        "type": "pwa-node"
+        "type": "node"
     }
     ]
 }
