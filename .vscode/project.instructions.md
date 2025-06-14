@@ -1,3 +1,7 @@
+---
+applyTo: '**'
+---
+
 # VSCode Bisect Project Instructions
 
 ## Project Overview
