@@ -6,8 +6,9 @@
 import prompts from 'prompts';
 import chalk from 'chalk';
 import open from 'open';
+import { rmSync } from 'fs';
 import { builds, IBuild } from './builds';
-import { logTroubleshoot, Runtime } from './constants';
+import { logTroubleshoot, Runtime, USER_DATA_FOLDER } from './constants';
 import { launcher } from './launcher';
 
 enum BisectResponse {
@@ -156,7 +157,8 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     choices: [
                         { title: 'Good', value: 'good' },
                         { title: 'Bad', value: 'bad' },
-                        { title: 'Retry', value: 'retry' }
+                        { title: 'Retry', value: 'retry' },
+                        { title: 'Retry (fresh user data dir)', value: 'retry-fresh' }
                     ]
                 }
             ]) : await prompts([
@@ -166,6 +168,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to restart ${chalk.green(build.commit)}?`,
                     choices: [
                         { title: 'Yes', value: 'retry' },
+                        { title: 'Yes (fresh user data dir)', value: 'retry-fresh' },
                         { title: 'No', value: 'no' }
                     ]
                 }
@@ -173,7 +176,11 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
 
             await instance.stop();
 
-            if (response.status === 'retry') {
+            if (response.status === 'retry-fresh') {
+                this.cleanUserDataDir();
+            }
+
+            if (response.status === 'retry' || response.status === 'retry-fresh') {
                 return this.tryBuild(build, { forceReDownload: false, isBisecting: options.isBisecting });
             }
 
@@ -188,18 +195,32 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to retry?`,
                     choices: [
                         { title: 'Yes', value: 'yes' },
+                        { title: 'Yes (fresh user data dir)', value: 'yes-fresh' },
                         { title: 'No', value: 'no' }
                     ]
                 }
             ]);
 
-            if (response.status === 'yes') {
+            if (response.status === 'yes-fresh') {
+                this.cleanUserDataDir();
+            }
+
+            if (response.status === 'yes' || response.status === 'yes-fresh') {
                 return this.tryBuild(build, { forceReDownload: true, isBisecting: options.isBisecting });
             }
 
             logTroubleshoot();
 
             return BisectResponse.Quit;
+        }
+    }
+
+    private cleanUserDataDir(): void {
+        try {
+            console.log(`${chalk.gray('[build]')} cleaning user data directory...`);
+            rmSync(USER_DATA_FOLDER, { recursive: true });
+        } catch (error) {
+            // Ignore errors if directory doesn't exist
         }
     }
 }

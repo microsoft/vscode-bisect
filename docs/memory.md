@@ -47,10 +47,12 @@ This document serves as a quick reference for understanding what each important 
 - **Key Details**:
   - Implements binary search algorithm for build bisection
   - Manages bisect state (currentChunk, currentIndex)
-  - Handles user responses (Good, Bad, Quit) for each build test
+  - Handles user responses (Good, Bad, Quit, Retry, Retry with fresh data dir) for each build test
+  - Provides retry options including fresh user data directory cleanup
   - Resolves commit hashes from version strings
   - Orchestrates the bisect workflow from start to finish
   - Provides final results and GitHub link generation
+  - Includes cleanUserDataDir() method for clearing cached user data
 
 ### `src/builds.ts`
 - **Purpose**: Build fetching, caching, installation, and metadata management
