@@ -194,9 +194,9 @@ class Builds {
                     case Platform.MacOSArm:
                         return 'vscode-server-darwin-arm64-web.zip';
                     case Platform.LinuxX64:
-                        return 'vscode-server-linux-arm64-web.tar.gz';
-                    case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web.tar.gz';
+                        case Platform.LinuxArm:
+                        return 'vscode-server-linux-arm64-web.tar.gz';
                     case Platform.WindowsX64:
                         return 'vscode-server-win32-x64-web.zip';
                     case Platform.WindowsArm:
@@ -236,9 +236,9 @@ class Builds {
                     case Platform.MacOSArm:
                         return 'vscode-server-darwin-arm64-web';
                     case Platform.LinuxX64:
-                        return 'vscode-server-linux-arm64-web';
-                    case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web';
+                        case Platform.LinuxArm:
+                        return 'vscode-server-linux-arm64-web';
                     case Platform.WindowsX64:
                         return 'vscode-server-win32-x64-web';
                     case Platform.WindowsArm:
