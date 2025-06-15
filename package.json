@@ -27,17 +27,17 @@
         "node": ">= 20"
     },
     "dependencies": {
-        "@vscode/vscode-perf": "^0.0.19",
+        "@vscode/vscode-perf": "^0.0.22",
         "chalk": "^5.x",
         "commander": "^9.4.0",
         "fflate": "^0.8.2",
         "follow-redirects": "^1.15.9",
-        "open": "^8.4.0",
+        "open": "^10.x",
         "progress": "^2.0.3",
         "prompts": "^2.4.2",
         "simple-git": "^3.16.0",
         "tree-kill": "^1.2.2",
-        "vscode-uri": "^3.0.8"
+        "vscode-uri": "^3.x"
     },
     "devDependencies": {
         "@types/follow-redirects": "^1.x",
