@@ -20,12 +20,14 @@ export async function exists(path: string): Promise<boolean> {
     }
 }
 
-export function getBuildPath(commit: string): string {
+export function getBuildPath(commit: string, quality: string): string {
+    let uniqueFolderName = quality === 'insider' ? commit : `s-${commit}`; // for stable builds, prefix with s-
+
     if (platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
-        return join(BUILD_FOLDER, commit.substring(0, 6)); // keep the folder path small for windows max path length restrictions
+        return join(BUILD_FOLDER, uniqueFolderName.substring(0, 6)); // keep the folder path small for windows max path length restrictions
     }
 
-    return join(BUILD_FOLDER, commit);
+    return join(BUILD_FOLDER, uniqueFolderName);
 }
 
 export async function unzip(source: string, destination: string): Promise<void> {

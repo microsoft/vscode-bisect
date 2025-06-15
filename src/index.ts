@@ -19,6 +19,7 @@ module.exports = async function (argv: string[]): Promise<void> {
 
     interface Opts {
         runtime?: 'web' | 'desktop' | 'vscode.dev';
+        quality?: 'insider' | 'stable';
         good?: string;
         bad?: string;
         commit?: string;
@@ -34,18 +35,19 @@ module.exports = async function (argv: string[]): Promise<void> {
 
     program
         .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
-        .option('-g, --good <commit|version>', 'commit hash or version of a published insiders build that does not reproduce the issue')
-        .option('-b, --bad <commit|version>', 'commit hash or version of a published insiders build that reproduces the issue')
-        .option('-c, --commit <commit|latest>', 'commit hash of a published insiders build to test or "latest" released build (supercedes -g and -b)')
-        .option('-v, --version <major.minor>', 'version of a published insiders build to test, for example 1.93 (supercedes -g, -b and -c)')
-        .option('--releasedOnly', 'only bisect over released insiders builds to support older builds')
+        .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
+        .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
+        .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
+        .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
+        .option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"')
+        .option('--releasedOnly', 'only bisect over released builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
         .addOption(new Option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`).hideHelp())
         .option('--verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
-Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 insider builds. Use '--releasedOnly' to only consider released builds and thus allow for older builds to be tested.
+Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 builds. Use '--releasedOnly' to only consider released builds and thus allow for older builds to be tested.
 
 Builds are stored and cached on disk in ${BUILD_FOLDER}
     `);
@@ -91,7 +93,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
                     type: 'text',
                     name: 'bad',
                     initial: '',
-                    message: 'Commit or version of released insiders build that reproduces the issue (leave empty to pick the latest build)',
+                    message: 'Commit or version of released build that reproduces the issue (leave empty to pick the latest build)',
                 }
             ]);
 
@@ -108,7 +110,7 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
                     type: 'text',
                     name: 'good',
                     initial: '',
-                    message: 'Commit or version of released insiders build that does not reproduce the issue (leave empty to pick the oldest build)',
+                    message: 'Commit or version of released build that does not reproduce the issue (leave empty to pick the oldest build)',
                 }
             ]);
 
@@ -130,17 +132,22 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
             runtime = Runtime.DesktopLocal;
         }
 
+        let quality: 'insider' | 'stable' = 'insider';
+        if (opts.quality) {
+            quality = opts.quality;
+        }
+
         let commit: string | undefined;
         if (opts.version) {
             if (!/^\d+\.\d+$/.test(opts.version)) {
                 throw new Error(`Invalid version format. Please provide a version in the format of ${chalk.green('major.minor')}, for example ${chalk.green('1.93')}.`);
             }
 
-            const build = await builds.fetchBuildByVersion(runtime, opts.version);
+            const build = await builds.fetchBuildByVersion(runtime, quality, opts.version);
             commit = build.commit;
         } else if (opts.commit) {
             if (opts.commit === 'latest') {
-                const allBuilds = await builds.fetchBuilds(runtime, undefined, undefined, opts.releasedOnly);
+                const allBuilds = await builds.fetchBuilds(runtime, quality, undefined, undefined, opts.releasedOnly);
                 commit = allBuilds[0].commit;
             } else {
                 commit = opts.commit;
@@ -149,12 +156,12 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         // Commit provided: launch only that commit
         if (commit) {
-            await bisecter.tryBuild({ commit, runtime }, { isBisecting: false, forceReDownload: false });
+            await bisecter.tryBuild({ commit, runtime, quality }, { isBisecting: false, forceReDownload: false });
         }
 
         // No commit provided: bisect commit ranges
         else {
-            await bisecter.start(runtime, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
+            await bisecter.start(runtime, quality, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
         }
     } catch (error) {
         console.log(`${chalk.red('\n[error]')} ${error}`);

@@ -76,11 +76,11 @@ class Launcher {
             // Web (remote)
             case Runtime.WebRemote:
                 if (CONFIG.performance) {
-                    console.log(`${chalk.gray('[build]')} opening insiders.vscode.dev ${chalk.green(build.commit)} multiple times and measuring performance...`);
+                    console.log(`${chalk.gray('[build]')} opening vscode.dev ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runWebPerformance(build);
                 }
 
-                console.log(`${chalk.gray('[build]')} opening insiders.vscode.dev ${chalk.green(build.commit)}...`);
+                console.log(`${chalk.gray('[build]')} opening vscode.dev ${chalk.green(build.commit)}...`);
                 return this.launchRemoteWeb(build);
 
             // Desktop
@@ -120,7 +120,7 @@ class Launcher {
 
         // Web remote: use remote URL
         else {
-            url = VSCODE_DEV_URL(build.commit);
+            url = VSCODE_DEV_URL(build.commit, build.quality);
         }
 
         try {
@@ -194,7 +194,7 @@ class Launcher {
     }
 
     private async launchRemoteWeb(build: IBuild): Promise<IInstance> {
-        open(VSCODE_DEV_URL(build.commit));
+        open(VSCODE_DEV_URL(build.commit, build.quality));
 
         return NOOP_INSTANCE;
     }

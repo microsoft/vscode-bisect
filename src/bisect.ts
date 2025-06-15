@@ -24,13 +24,13 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start(runtime: Runtime = Runtime.WebLocal, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
+    async start(runtime: Runtime = Runtime.WebLocal, quality: 'insider' | 'stable', goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
 
         // Resolve commits from input
-        const { goodCommit, badCommit } = await this.resolveCommits(runtime, goodCommitOrVersion, badCommitOrVersion);
+        const { goodCommit, badCommit } = await this.resolveCommits(runtime, quality, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds(runtime, goodCommit, badCommit, releasedOnly);
+        const buildsRange = await builds.fetchBuilds(runtime, quality, goodCommit, badCommit, releasedOnly);
 
         console.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 
@@ -71,21 +71,21 @@ class Bisecter {
         }
     }
 
-    private async resolveCommits(runtime: Runtime, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
+    private async resolveCommits(runtime: Runtime, quality: 'insider' | 'stable', goodCommitOrVersion?: string, badCommitOrVersion?: string) {
         return {
-            goodCommit: await this.resolveCommit(runtime, goodCommitOrVersion),
-            badCommit: await this.resolveCommit(runtime, badCommitOrVersion)
+            goodCommit: await this.resolveCommit(runtime, quality, goodCommitOrVersion),
+            badCommit: await this.resolveCommit(runtime, quality, badCommitOrVersion)
         };
     }
 
-    private async resolveCommit(runtime: Runtime, commitOrVersion?: string) {
+    private async resolveCommit(runtime: Runtime, quality: 'insider' | 'stable', commitOrVersion?: string) {
         if (!commitOrVersion) {
             return undefined;
         }
 
         if (/^\d+\.\d+$/.test(commitOrVersion)) {
-            const commit = (await builds.fetchBuildByVersion(runtime, commitOrVersion)).commit;
-            console.log(`${chalk.gray('[build]')} latest insiders build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
+            const commit = (await builds.fetchBuildByVersion(runtime, quality, commitOrVersion)).commit;
+            console.log(`${chalk.gray('[build]')} latest build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
             return commit;
         }
 
@@ -158,8 +158,8 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         { title: 'Good', value: 'good' },
                         { title: 'Bad', value: 'bad' },
                         { title: 'Retry', value: 'retry' },
-                        { title: 'Retry (fresh user data dir)', value: 'retry-fresh' }
-                    ]
+                        build.runtime === Runtime.DesktopLocal ? { title: 'Retry (fresh user data dir)', value: 'retry-fresh' } : undefined
+                    ].filter(e => !!e)
                 }
             ]) : await prompts([
                 {
@@ -168,9 +168,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to restart ${chalk.green(build.commit)}?`,
                     choices: [
                         { title: 'Yes', value: 'retry' },
-                        { title: 'Yes (fresh user data dir)', value: 'retry-fresh' },
+                        build.runtime === Runtime.DesktopLocal ? { title: 'Yes (fresh user data dir)', value: 'retry-fresh' } : undefined,
                         { title: 'No', value: 'no' }
-                    ]
+                    ].filter(e => !!e)
                 }
             ]);
 
@@ -195,9 +195,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to retry?`,
                     choices: [
                         { title: 'Yes', value: 'yes' },
-                        { title: 'Yes (fresh user data dir)', value: 'yes-fresh' },
+                        build.runtime === Runtime.DesktopLocal ? { title: 'Yes (fresh user data dir)', value: 'yes-fresh' } : undefined,
                         { title: 'No', value: 'no' }
-                    ]
+                    ].filter(e => !!e)
                 }
             ]);
 
