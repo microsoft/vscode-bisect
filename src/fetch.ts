@@ -3,12 +3,14 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { https } from 'follow-redirects';
+import followRedirects from 'follow-redirects';
 import { createWriteStream, promises } from 'fs';
 import { dirname } from 'path';
 import { OutgoingHttpHeaders } from 'http';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
+
+const https = followRedirects.https;
 
 export function jsonGet<T>(url: string, headers?: OutgoingHttpHeaders): Promise<T> {
     return new Promise((resolve, reject) => {

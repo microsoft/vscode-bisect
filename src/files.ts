@@ -7,7 +7,7 @@ import { spawnSync } from 'child_process';
 import { mkdirSync, promises, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
-import { BUILD_FOLDER, Platform, platform } from './constants';
+import { BUILD_FOLDER, Platform, platform } from './constants.js';
 import { unzipSync } from 'fflate';
 
 export async function exists(path: string): Promise<boolean> {

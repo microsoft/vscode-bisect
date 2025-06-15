@@ -6,9 +6,9 @@
 import chalk from 'chalk';
 import { dirname, join } from 'path';
 import { rmSync } from 'fs';
-import { LOGGER, Platform, platform, Runtime } from './constants';
-import { fileGet, jsonGet } from './fetch';
-import { computeSHA256, exists, getBuildPath, unzip } from './files';
+import { LOGGER, Platform, platform, Runtime } from './constants.js';
+import { fileGet, jsonGet } from './fetch.js';
+import { computeSHA256, exists, getBuildPath, unzip } from './files.js';
 
 export interface IBuildKind {
     readonly runtime: Runtime;

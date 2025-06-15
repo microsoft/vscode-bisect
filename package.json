@@ -16,6 +16,7 @@
     "license": "MIT",
     "authors": "microsoft",
     "main": "out/index",
+    "type": "module",
     "scripts": {
         "compile": "tsc -p ./",
         "build": "tsc -p ./",
@@ -23,14 +24,14 @@
         "prepare": "npm run build"
     },
     "engines": {
-        "node": ">= 16"
+        "node": ">= 20"
     },
     "dependencies": {
         "@vscode/vscode-perf": "^0.0.19",
-        "chalk": "^4.x",
+        "chalk": "^5.x",
         "commander": "^9.4.0",
         "fflate": "^0.8.2",
-        "follow-redirects": "^1.15.6",
+        "follow-redirects": "^1.15.9",
         "open": "^8.4.0",
         "progress": "^2.0.3",
         "prompts": "^2.4.2",

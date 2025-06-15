@@ -6,8 +6,8 @@
 import chalk from 'chalk';
 import { mkdirSync } from 'fs';
 import simpleGit from 'simple-git';
-import { GIT_FOLDER, GIT_REPO, GIT_VSCODE_FOLDER } from './constants';
-import { exists } from './files';
+import { GIT_FOLDER, GIT_REPO, GIT_VSCODE_FOLDER } from './constants.js';
+import { exists } from './files.js';
 
 class Git {
 
@@ -30,7 +30,7 @@ class Git {
         if (await exists(GIT_VSCODE_FOLDER)) {
             console.log(`${chalk.gray('[git]')} pulling latest changes into ${chalk.green(GIT_FOLDER)}...`);
 
-            const git = simpleGit({ baseDir: GIT_VSCODE_FOLDER });
+            const git = simpleGit.default({ baseDir: GIT_VSCODE_FOLDER });
             await git.checkout('main');
             await git.pull();
         }
@@ -39,7 +39,7 @@ class Git {
         else {
             console.log(`${chalk.gray('[git]')} cloning VS Code into ${chalk.green(GIT_VSCODE_FOLDER)} (this is only done once and can take a while)...`);
 
-            const git = simpleGit();
+            const git = simpleGit.default();
             await git.clone(GIT_REPO, GIT_VSCODE_FOLDER);
         }
     }

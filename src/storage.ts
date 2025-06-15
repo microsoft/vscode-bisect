@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { promises } from 'fs';
-import { STORAGE_FILE } from './constants';
+import { STORAGE_FILE } from './constants.js';
 
 class Storage {
 

@@ -7,9 +7,9 @@ import prompts from 'prompts';
 import chalk from 'chalk';
 import open from 'open';
 import { rmSync } from 'fs';
-import { builds, IBuild, IBuildKind } from './builds';
-import { logTroubleshoot, Runtime, USER_DATA_FOLDER } from './constants';
-import { launcher } from './launcher';
+import { builds, IBuild, IBuildKind } from './builds.js';
+import { logTroubleshoot, Runtime, USER_DATA_FOLDER } from './constants.js';
+import { launcher } from './launcher.js';
 
 enum BisectResponse {
     Good = 1,

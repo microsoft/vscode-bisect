@@ -4,8 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from 'chalk';
+import { createRequire } from 'module';
 import { tmpdir } from 'os';
 import { join } from 'path';
+
+const require = createRequire(import.meta.url);
 
 export const ROOT = join(tmpdir(), 'vscode-bisect');
 

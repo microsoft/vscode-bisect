@@ -7,15 +7,17 @@ import chalk from 'chalk';
 import { program, Option } from 'commander';
 import { rmSync, truncateSync } from 'fs';
 import prompts from 'prompts';
-import { bisecter } from './bisect';
-import { git } from './git';
-import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants';
-import { launcher } from './launcher';
-import { builds, IBuildKind } from './builds';
+import { bisecter } from './bisect.js';
+import { git } from './git.js';
+import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants.js';
+import { builds, IBuildKind } from './builds.js';
 import { resolve } from 'path';
-import { exists } from './files';
+import { exists } from './files.js';
+import { createRequire } from 'module';
 
-module.exports = async function (argv: string[]): Promise<void> {
+const require = createRequire(import.meta.url);
+
+export default async function main(argv: string[]): Promise<void> {
 
     interface Opts {
         runtime?: 'web' | 'desktop' | 'vscode.dev';
