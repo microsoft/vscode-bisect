@@ -329,7 +329,7 @@ class Builds {
                             return oldLocation; // only valid until 1.64.x
                         }
 
-                        return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                        return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
                     }
                 }
 
