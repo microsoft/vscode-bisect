@@ -34,7 +34,7 @@ export default async function main(argv: string[]): Promise<void> {
         token?: string;
     }
 
-    program.addHelpText('beforeAll', `Version: ${require('../package.json').version}\n`);
+    program.addHelpText('beforeAll', `Version: ${chalk.green(require('../package.json').version)}\n`);
 
     program
         .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
@@ -51,9 +51,9 @@ export default async function main(argv: string[]): Promise<void> {
         .option('--verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
-Note: if no commit is specified, vscode-bisect will automatically bisect the last 200 builds. Use '--releasedOnly' to only consider released builds and thus allow for older builds to be tested.
+${chalk.bold('Note:')} if no commit is specified, the last 200 builds will be bisected. Use ${chalk.green('\'--releasedOnly\'')} to only consider released builds for testing older builds.
 
-Builds are stored and cached on disk in ${BUILD_FOLDER}
+Builds are stored and cached on disk in ${chalk.green(BUILD_FOLDER)}
     `);
 
     const opts: Opts = program.parse(argv).opts();
