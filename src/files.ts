@@ -20,11 +20,20 @@ export async function exists(path: string): Promise<boolean> {
     }
 }
 
-export function getBuildPath(commit: string, quality: string): string {
-    let uniqueFolderName = quality === 'insider' ? commit : `s-${commit}`; // for stable builds, prefix with s-
-
+export function getBuildPath(commit: string, quality: 'insider' | 'stable', flavor: 'universal' | undefined): string {
+    let uniqueFolderName: string;
     if (platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
-        return join(BUILD_FOLDER, uniqueFolderName.substring(0, 6)); // keep the folder path small for windows max path length restrictions
+        uniqueFolderName = commit.substring(0, 6); // keep the folder path small for windows max path length restrictions
+    } else {
+        uniqueFolderName = commit;
+    }
+
+    if (quality === 'stable') {
+        uniqueFolderName = `stable-${uniqueFolderName}`;
+    }
+
+    if (flavor === 'universal') {
+        uniqueFolderName = `universal-${uniqueFolderName}`;
     }
 
     return join(BUILD_FOLDER, uniqueFolderName);

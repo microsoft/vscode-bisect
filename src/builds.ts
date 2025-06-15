@@ -143,7 +143,7 @@ class Builds {
     async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<void> {
         const buildName = await this.getBuildArchiveName({ runtime, commit, quality, flavor });
 
-        const path = join(getBuildPath(commit, quality), buildName);
+        const path = join(getBuildPath(commit, quality, flavor), buildName);
 
         const pathExists = await exists(path);
         if (pathExists && !options?.forceReDownload) {
@@ -155,8 +155,8 @@ class Builds {
         }
 
         if (pathExists && options?.forceReDownload) {
-            console.log(`${chalk.gray('[build]')} deleting ${chalk.green(getBuildPath(commit, quality))} and retrying download`);
-            rmSync(getBuildPath(commit, quality), { recursive: true });
+            console.log(`${chalk.gray('[build]')} deleting ${chalk.green(getBuildPath(commit, quality, flavor))} and retrying download`);
+            rmSync(getBuildPath(commit, quality, flavor), { recursive: true });
         }
 
         // Download
@@ -313,7 +313,7 @@ class Builds {
     }
 
     async getBuildExecutable({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
-        const buildPath = getBuildPath(commit, quality);
+        const buildPath = getBuildPath(commit, quality, flavor);
         const buildName = await builds.getBuildName({ runtime, commit, quality, flavor });
 
         switch (runtime) {
