@@ -109,11 +109,13 @@ class Builds {
                     case Platform.MacOSArm:
                         return 'server-darwin-web';
                     case Platform.LinuxX64:
-                    case Platform.LinuxArm:
                         return 'server-linux-x64-web';
+                    case Platform.LinuxArm:
+                        return 'server-linux-arm64-web';
                     case Platform.WindowsX64:
-                    case Platform.WindowsArm:
                         return 'server-win32-x64-web';
+                    case Platform.WindowsArm:
+                        return 'server-win32-arm64-web';
                 }
 
             case Runtime.DesktopLocal:
@@ -196,8 +198,9 @@ class Builds {
                     case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web.tar.gz';
                     case Platform.WindowsX64:
-                    case Platform.WindowsArm:
                         return 'vscode-server-win32-x64-web.zip';
+                    case Platform.WindowsArm:
+                        return 'vscode-server-win32-arm64-web.zip';
                 }
 
             // Every platform has its own name scheme, hilarious right?
@@ -237,8 +240,9 @@ class Builds {
                     case Platform.LinuxArm:
                         return 'vscode-server-linux-x64-web';
                     case Platform.WindowsX64:
-                    case Platform.WindowsArm:
                         return 'vscode-server-win32-x64-web';
+                    case Platform.WindowsArm:
+                        return 'vscode-server-win32-arm64-web';
                 }
 
             // Here, only Windows does not play by our rules and adds the version number
@@ -276,8 +280,9 @@ class Builds {
                     case Platform.LinuxArm:
                         return 'server-linux-arm64-web';
                     case Platform.WindowsX64:
-                    case Platform.WindowsArm:
                         return 'server-win32-x64-web';
+                    case Platform.WindowsArm:
+                        return 'server-win32-arm64-web';
                 }
 
             case Runtime.DesktopLocal:
