@@ -7,13 +7,13 @@ import chalk from 'chalk';
 import { program, Option } from 'commander';
 import { rmSync, truncateSync } from 'fs';
 import prompts from 'prompts';
+import { resolve } from 'path';
+import { createRequire } from 'module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
 import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
-import { resolve } from 'path';
 import { exists } from './files.js';
-import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 

@@ -3,17 +3,17 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { mkdirSync, rmSync } from 'fs';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { join } from 'path';
 import { URI } from 'vscode-uri';
 import open from 'open';
 import kill from 'tree-kill';
-import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL } from './constants.js';
-import { mkdirSync, rmSync } from 'fs';
-import { exists } from './files.js';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
+import { builds, IBuild } from './builds.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL } from './constants.js';
+import { exists } from './files.js';
 
 export interface IInstance {
 
