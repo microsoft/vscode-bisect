@@ -10,10 +10,14 @@ import { LOGGER, Platform, platform, Runtime } from './constants';
 import { fileGet, jsonGet } from './fetch';
 import { computeSHA256, exists, getBuildPath, unzip } from './files';
 
-export interface IBuild {
+export interface IBuildKind {
     readonly runtime: Runtime;
-    readonly commit: string;
     readonly quality: 'insider' | 'stable';
+    readonly flavor: 'universal' | undefined;
+}
+
+export interface IBuild extends IBuildKind {
+    readonly commit: string;
 }
 
 interface IBuildMetadata {
@@ -25,21 +29,21 @@ interface IBuildMetadata {
 
 class Builds {
 
-    async fetchBuildByVersion(runtime = Runtime.WebLocal, quality: 'insider' | 'stable', version: string): Promise<IBuild> {
+    async fetchBuildByVersion({ runtime, quality, flavor }: IBuildKind, version: string): Promise<IBuild> {
         let meta;
         if (quality === 'insider') {
-            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName(runtime)}/insider?released=true`);
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName({ runtime, quality, flavor })}/insider?released=true`);
         } else {
-            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName(runtime)}/stable?released=true`);
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName({ runtime, quality, flavor })}/stable?released=true`);
         }
 
-        return { runtime, commit: meta.version, quality };
+        return { runtime, commit: meta.version, quality, flavor };
     }
 
-    async fetchBuilds(runtime = Runtime.WebLocal, quality: 'insider' | 'stable', goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<IBuild[]> {
+    async fetchBuilds({ runtime, quality, flavor }: IBuildKind, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<IBuild[]> {
 
         // Fetch all released builds
-        const allBuilds = await this.fetchAllBuilds(runtime, quality, releasedOnly);
+        const allBuilds = await this.fetchAllBuilds({runtime, quality, flavor}, releasedOnly);
 
         let goodCommitIndex = allBuilds.length - 1;  // last build (oldest) by default
         let badCommitIndex = 0;                      // first build (newest) by default
@@ -50,7 +54,7 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of builds. It is either invalid or too old.`);
                 } else {
-                    return this.fetchBuilds(runtime, quality, goodCommit, badCommit, true);
+                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true);
                 }
             }
 
@@ -63,7 +67,7 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of builds. It is either invalid or too old.`);
                 } else {
-                    return this.fetchBuilds(runtime, quality, goodCommit, badCommit, true);
+                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true);
                 }
             }
 
@@ -92,15 +96,15 @@ class Builds {
         return undefined;
     }
 
-    private async fetchAllBuilds(runtime: Runtime, quality: 'insider' | 'stable', releasedOnly = false): Promise<IBuild[]> {
-        const url = `https://update.code.visualstudio.com/api/commits/${quality}/${this.getBuildApiName(runtime)}?released=${releasedOnly}`;
+    private async fetchAllBuilds({ runtime, quality, flavor }: IBuildKind, releasedOnly = false): Promise<IBuild[]> {
+        const url = `https://update.code.visualstudio.com/api/commits/${quality}/${this.getBuildApiName({ runtime, quality, flavor })}?released=${releasedOnly}`;
         console.log(`${chalk.gray('[build]')} fetching all builds from ${chalk.green(url)}...`);
         const commits = await jsonGet<Array<string>>(url);
 
-        return commits.map(commit => ({ commit, runtime, quality }));
+        return commits.map(commit => ({ commit, runtime, quality, flavor }));
     }
 
-    private getBuildApiName(runtime: Runtime): string {
+    private getBuildApiName({ runtime, flavor }: IBuildKind): string {
         switch (runtime) {
             case Runtime.WebLocal:
             case Runtime.WebRemote:
@@ -121,9 +125,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return 'darwin';
+                        return flavor === 'universal' ? 'darwin-universal' : 'darwin';
                     case Platform.MacOSArm:
-                        return 'darwin-arm64';
+                        return flavor === 'universal' ? 'darwin-universal' : 'darwin-arm64';
                     case Platform.LinuxX64:
                         return 'linux-x64';
                     case Platform.LinuxArm:
@@ -136,8 +140,8 @@ class Builds {
         }
     }
 
-    async installBuild({ runtime, commit, quality }: IBuild, options?: { forceReDownload: boolean }): Promise<void> {
-        const buildName = await this.getBuildArchiveName({ runtime, commit, quality });
+    async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<void> {
+        const buildName = await this.getBuildArchiveName({ runtime, commit, quality, flavor });
 
         const path = join(getBuildPath(commit, quality), buildName);
 
@@ -156,7 +160,7 @@ class Builds {
         }
 
         // Download
-        const { url, sha256hash: expectedSHA256 } = await this.fetchBuildMeta({ runtime, commit, quality });
+        const { url, sha256hash: expectedSHA256 } = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
         console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
         await fileGet(url, path);
 
@@ -181,7 +185,7 @@ class Builds {
         await unzip(path, destination);
     }
 
-    private async getBuildArchiveName({ runtime, commit, quality }: IBuild): Promise<string> {
+    private async getBuildArchiveName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
         switch (runtime) {
 
             // We currently do not have ARM enabled servers
@@ -195,7 +199,7 @@ class Builds {
                         return 'vscode-server-darwin-arm64-web.zip';
                     case Platform.LinuxX64:
                         return 'vscode-server-linux-x64-web.tar.gz';
-                        case Platform.LinuxArm:
+                    case Platform.LinuxArm:
                         return 'vscode-server-linux-arm64-web.tar.gz';
                     case Platform.WindowsX64:
                         return 'vscode-server-win32-x64-web.zip';
@@ -210,15 +214,15 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return 'VSCode-darwin.zip';
+                        return flavor === 'universal' ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin.zip';
                     case Platform.MacOSArm:
-                        return 'VSCode-darwin-arm64.zip';
+                        return flavor === 'universal' ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin-arm64.zip';
                     case Platform.LinuxX64:
                     case Platform.LinuxArm:
-                        return (await this.fetchBuildMeta({ runtime, commit, quality })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
+                        return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
                     case Platform.WindowsX64:
                     case Platform.WindowsArm: {
-                        const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality });
+                        const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
 
                         return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}.zip` : `VSCode-win32-arm64-${buildMeta.productVersion}.zip`;
                     }
@@ -226,7 +230,7 @@ class Builds {
         }
     }
 
-    async getBuildName({ runtime, commit, quality }: IBuild): Promise<string> {
+    async getBuildName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
         switch (runtime) {
             case Runtime.WebLocal:
             case Runtime.WebRemote:
@@ -237,7 +241,7 @@ class Builds {
                         return 'vscode-server-darwin-arm64-web';
                     case Platform.LinuxX64:
                         return 'vscode-server-linux-x64-web';
-                        case Platform.LinuxArm:
+                    case Platform.LinuxArm:
                         return 'vscode-server-linux-arm64-web';
                     case Platform.WindowsX64:
                         return 'vscode-server-win32-x64-web';
@@ -258,7 +262,7 @@ class Builds {
                         return 'VSCode-linux-arm64';
                     case Platform.WindowsX64:
                     case Platform.WindowsArm: {
-                        const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality });
+                        const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
 
                         return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}` : `VSCode-win32-arm64-${buildMeta.productVersion}`;
                     }
@@ -266,7 +270,7 @@ class Builds {
         }
     }
 
-    private getPlatformName(runtime: Runtime): string {
+    private getPlatformName({ runtime, flavor }: IBuildKind): string {
         switch (runtime) {
             case Runtime.WebLocal:
             case Runtime.WebRemote:
@@ -288,9 +292,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return 'darwin';
+                        return flavor === 'universal' ? 'darwin-universal' : 'darwin';
                     case Platform.MacOSArm:
-                        return 'darwin-arm64';
+                        return flavor === 'universal' ? 'darwin-universal' : 'darwin-arm64';
                     case Platform.LinuxX64:
                         return 'linux-x64';
                     case Platform.LinuxArm:
@@ -304,13 +308,13 @@ class Builds {
         }
     }
 
-    private fetchBuildMeta({ runtime, commit, quality }: IBuild): Promise<IBuildMetadata> {
-        return jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/commit:${commit}/${this.getPlatformName(runtime)}/${quality}`);
+    private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
+        return jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/commit:${commit}/${this.getPlatformName({ runtime, quality, flavor })}/${quality}`);
     }
 
-    async getBuildExecutable({ runtime, commit, quality }: IBuild): Promise<string> {
+    async getBuildExecutable({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
         const buildPath = getBuildPath(commit, quality);
-        const buildName = await builds.getBuildName({ runtime, commit, quality });
+        const buildName = await builds.getBuildName({ runtime, commit, quality, flavor });
 
         switch (runtime) {
             case Runtime.WebLocal:

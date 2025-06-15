@@ -7,7 +7,7 @@ import prompts from 'prompts';
 import chalk from 'chalk';
 import open from 'open';
 import { rmSync } from 'fs';
-import { builds, IBuild } from './builds';
+import { builds, IBuild, IBuildKind } from './builds';
 import { logTroubleshoot, Runtime, USER_DATA_FOLDER } from './constants';
 import { launcher } from './launcher';
 
@@ -24,13 +24,13 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start(runtime: Runtime = Runtime.WebLocal, quality: 'insider' | 'stable', goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
+    async start({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
 
         // Resolve commits from input
-        const { goodCommit, badCommit } = await this.resolveCommits(runtime, quality, goodCommitOrVersion, badCommitOrVersion);
+        const { goodCommit, badCommit } = await this.resolveCommits({ runtime, quality, flavor }, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds(runtime, quality, goodCommit, badCommit, releasedOnly);
+        const buildsRange = await builds.fetchBuilds({runtime, quality, flavor}, goodCommit, badCommit, releasedOnly);
 
         console.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 
@@ -71,20 +71,20 @@ class Bisecter {
         }
     }
 
-    private async resolveCommits(runtime: Runtime, quality: 'insider' | 'stable', goodCommitOrVersion?: string, badCommitOrVersion?: string) {
+    private async resolveCommits({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
         return {
-            goodCommit: await this.resolveCommit(runtime, quality, goodCommitOrVersion),
-            badCommit: await this.resolveCommit(runtime, quality, badCommitOrVersion)
+            goodCommit: await this.resolveCommit({ runtime, quality, flavor }, goodCommitOrVersion),
+            badCommit: await this.resolveCommit({ runtime, quality, flavor }, badCommitOrVersion)
         };
     }
 
-    private async resolveCommit(runtime: Runtime, quality: 'insider' | 'stable', commitOrVersion?: string) {
+    private async resolveCommit({ runtime, quality, flavor }: IBuildKind, commitOrVersion?: string) {
         if (!commitOrVersion) {
             return undefined;
         }
 
         if (/^\d+\.\d+$/.test(commitOrVersion)) {
-            const commit = (await builds.fetchBuildByVersion(runtime, quality, commitOrVersion)).commit;
+            const commit = (await builds.fetchBuildByVersion({ runtime, quality, flavor }, commitOrVersion)).commit;
             console.log(`${chalk.gray('[build]')} latest build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
             return commit;
         }

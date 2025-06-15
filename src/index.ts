@@ -11,7 +11,7 @@ import { bisecter } from './bisect';
 import { git } from './git';
 import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants';
 import { launcher } from './launcher';
-import { builds } from './builds';
+import { builds, IBuildKind } from './builds';
 import { resolve } from 'path';
 import { exists } from './files';
 
@@ -19,11 +19,12 @@ module.exports = async function (argv: string[]): Promise<void> {
 
     interface Opts {
         runtime?: 'web' | 'desktop' | 'vscode.dev';
-        quality?: 'insider' | 'stable';
-        good?: string;
-        bad?: string;
         commit?: string;
         version?: string;
+        quality?: 'insider' | 'stable';
+        flavor?: string;
+        good?: string;
+        bad?: string;
         releasedOnly?: boolean;
         verbose?: boolean;
         reset?: boolean;
@@ -38,6 +39,7 @@ module.exports = async function (argv: string[]): Promise<void> {
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"')
+        .option('-f, --flavor <universal>', 'flavor of a published build to test (only applies when testing desktop builds)')
         .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
         .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')
@@ -137,17 +139,28 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
             quality = opts.quality;
         }
 
+        let flavor: 'universal' | undefined;
+        if (opts.flavor === 'universal') {
+            flavor = opts.flavor;
+
+            if (flavor && runtime !== Runtime.DesktopLocal) {
+                throw new Error(`Flavor ${chalk.green(flavor)} is only supported for desktop builds.`);
+            }
+        }
+
+        const buildKind: IBuildKind = { runtime, quality, flavor };
+
         let commit: string | undefined;
         if (opts.version) {
             if (!/^\d+\.\d+$/.test(opts.version)) {
                 throw new Error(`Invalid version format. Please provide a version in the format of ${chalk.green('major.minor')}, for example ${chalk.green('1.93')}.`);
             }
 
-            const build = await builds.fetchBuildByVersion(runtime, quality, opts.version);
+            const build = await builds.fetchBuildByVersion(buildKind, opts.version);
             commit = build.commit;
         } else if (opts.commit) {
             if (opts.commit === 'latest') {
-                const allBuilds = await builds.fetchBuilds(runtime, quality, undefined, undefined, opts.releasedOnly);
+                const allBuilds = await builds.fetchBuilds(buildKind, undefined, undefined, opts.releasedOnly);
                 commit = allBuilds[0].commit;
             } else {
                 commit = opts.commit;
@@ -156,12 +169,12 @@ Builds are stored and cached on disk in ${BUILD_FOLDER}
 
         // Commit provided: launch only that commit
         if (commit) {
-            await bisecter.tryBuild({ commit, runtime, quality }, { isBisecting: false, forceReDownload: false });
+            await bisecter.tryBuild({ commit, runtime, quality, flavor }, { isBisecting: false, forceReDownload: false });
         }
 
         // No commit provided: bisect commit ranges
         else {
-            await bisecter.start(runtime, quality, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
+            await bisecter.start(buildKind, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
         }
     } catch (error) {
         console.log(`${chalk.red('\n[error]')} ${error}`);
