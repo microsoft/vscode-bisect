@@ -29,7 +29,7 @@
     "dependencies": {
         "@vscode/vscode-perf": "^0.0.22",
         "chalk": "^5.x",
-        "commander": "^9.4.0",
+        "commander": "^14.x",
         "fflate": "^0.8.2",
         "follow-redirects": "^1.15.9",
         "open": "^10.x",
@@ -42,7 +42,7 @@
     "devDependencies": {
         "@types/follow-redirects": "^1.x",
         "@types/node": "20.x",
-        "@types/progress": "^2.0.7",
+        "@types/progress": "^2.x",
         "@types/prompts": "^2.x",
         "typescript": "5.x"
     }
