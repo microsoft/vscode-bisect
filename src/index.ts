@@ -53,7 +53,7 @@ export default async function main(argv: string[]): Promise<void> {
     program.addHelpText('after', `
 ${chalk.bold('Note:')} if no commit is specified, the last 200 builds will be bisected. Use ${chalk.green('\'--releasedOnly\'')} to only consider released builds for testing older builds.
 
-Builds are stored and cached on disk in ${chalk.green(BUILD_FOLDER)}
+${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
     `);
 
     const opts: Opts = program.parse(argv).opts();
