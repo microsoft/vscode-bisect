@@ -239,7 +239,6 @@ class Launcher {
                 '--disable-updates',
                 '--user-data-dir',
                 USER_DATA_FOLDER,
-                '--no-cached-data',
                 '--disable-telemetry'
             );
         }
