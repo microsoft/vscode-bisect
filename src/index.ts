@@ -35,11 +35,11 @@ module.exports = async function (argv: string[]): Promise<void> {
 
     program
         .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
-        .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
-        .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"')
+        .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
+        .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
