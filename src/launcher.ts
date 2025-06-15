@@ -244,24 +244,7 @@ class Launcher {
             );
         }
 
-        switch (build.runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                    case Platform.MacOSArm:
-                    case Platform.LinuxX64:
-                    case Platform.LinuxArm:
-                        return spawn('bash', [executable, ...args]);
-                    case Platform.WindowsX64:
-                    case Platform.WindowsArm:
-                        return spawn(executable, args);
-                }
-
-
-            case Runtime.DesktopLocal:
-                return spawn(executable, args);
-        }
+        return spawn(`"${executable}"`, args, { shell: true });
     }
 
     private async getExecutablePath(build: IBuild): Promise<string> {
