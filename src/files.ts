@@ -28,12 +28,17 @@ export function getBuildPath(commit: string, quality: 'insider' | 'stable', flav
         uniqueFolderName = commit;
     }
 
+    const prefixes: string[] = [];
     if (quality === 'stable') {
-        uniqueFolderName = `stable-${uniqueFolderName}`;
+        prefixes.push('stable');
     }
 
-    if (flavor === 'universal') {
-        uniqueFolderName = `universal-${uniqueFolderName}`;
+    if (flavor) {
+        prefixes.push(flavor);
+    }
+
+    if (prefixes.length > 0) {
+        uniqueFolderName = `${prefixes.join('-')}-${uniqueFolderName}`;
     }
 
     return join(BUILD_FOLDER, uniqueFolderName);
