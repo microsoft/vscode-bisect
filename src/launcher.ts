@@ -236,14 +236,12 @@ class Launcher {
 
         if (build.runtime === Runtime.DesktopLocal) {
             args.push(
-
                 '--disable-updates',
                 '--user-data-dir',
                 USER_DATA_FOLDER,
                 '--no-cached-data',
-                '--disable-telemetry' // only disable telemetry when not running performance tests to be able to look at perf marks
+                '--disable-telemetry'
             );
-
         }
 
         switch (build.runtime) {

@@ -158,8 +158,8 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         { title: 'Good', value: 'good' },
                         { title: 'Bad', value: 'bad' },
                         { title: 'Retry', value: 'retry' },
-                        build.runtime === Runtime.DesktopLocal ? { title: 'Retry (fresh user data dir)', value: 'retry-fresh' } : undefined
-                    ].filter(e => !!e)
+                        { title: 'Retry (fresh user data dir)', value: 'retry-fresh' }
+                    ]
                 }
             ]) : await prompts([
                 {
@@ -168,9 +168,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to restart ${chalk.green(build.commit)}?`,
                     choices: [
                         { title: 'Yes', value: 'retry' },
-                        build.runtime === Runtime.DesktopLocal ? { title: 'Yes (fresh user data dir)', value: 'retry-fresh' } : undefined,
+                        { title: 'Yes (fresh user data dir)', value: 'retry-fresh' },
                         { title: 'No', value: 'no' }
-                    ].filter(e => !!e)
+                    ]
                 }
             ]);
 
@@ -195,9 +195,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to retry?`,
                     choices: [
                         { title: 'Yes', value: 'yes' },
-                        build.runtime === Runtime.DesktopLocal ? { title: 'Yes (fresh user data dir)', value: 'yes-fresh' } : undefined,
+                        { title: 'Yes (fresh user data dir)', value: 'yes-fresh' },
                         { title: 'No', value: 'no' }
-                    ].filter(e => !!e)
+                    ]
                 }
             ]);
 
