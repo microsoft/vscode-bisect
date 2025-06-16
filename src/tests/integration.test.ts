@@ -14,6 +14,9 @@ setTesting(true);
 const platformFlavors = [Flavor.Default, Flavor.Cli];
 if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
     platformFlavors.push(Flavor.DarwinUniversal);
+} else if (platform === Platform.WindowsArm || platform === Platform.WindowsX64) {
+    platformFlavors.push(Flavor.WindowsUserInstaller);
+    platformFlavors.push(Flavor.WindowsSystemInstaller);
 }
 
 const buildKinds: IBuildKind[] = [];
