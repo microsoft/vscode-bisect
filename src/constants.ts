@@ -45,6 +45,7 @@ export const arch = (() => {
     if (process.arch === Arch.Arm64) {
         return Arch.Arm64;
     }
+
     return Arch.X64;
 })();
 
@@ -73,12 +74,10 @@ export const platform = (() => {
     throw new Error('Unsupported platform.');
 })();
 
-
-
 export enum Runtime {
     WebLocal = 'web-local',
     WebRemote = 'web-remote',
-    DesktopLocal = 'desktop-local'
+    DesktopLocal = 'desktop'
 }
 
 export function runtimeFromString(value: unknown): Runtime {
@@ -87,8 +86,14 @@ export function runtimeFromString(value: unknown): Runtime {
             return Runtime.WebLocal;
         case 'vscode.dev':
             return Runtime.WebRemote;
-        default:
+        case 'desktop':
             return Runtime.DesktopLocal;
+        default: {
+            if (typeof value === 'string') {
+                throw new Error(`Unknown runtime: ${value}`);
+            }
+            return Runtime.DesktopLocal;
+        }
     }
 }
 
@@ -101,8 +106,14 @@ export function qualityFromString(value: unknown): Quality {
     switch (value) {
         case 'stable':
             return Quality.Stable;
-        default:
+        case 'insider':
             return Quality.Insider;
+        default: {
+            if (typeof value === 'string') {
+                throw new Error(`Unknown quality: ${value}`);
+            }
+            return Quality.Insider;
+        }
     }
 }
 
@@ -124,8 +135,12 @@ export function flavorFromString(value: unknown): Flavor {
             return Flavor.WindowsSystemInstaller;
         case 'cli':
             return Flavor.Cli;
-        default:
+        default: {
+            if (typeof value === 'string') {
+                throw new Error(`Unknown flavor: ${value}`);
+            }
             return Flavor.Default;
+        }
     }
 }
 
