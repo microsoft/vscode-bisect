@@ -23,27 +23,31 @@ for (const quality of [Quality.Stable, Quality.Insider]) {
     }
 }
 
+function buildKindToString(kind: IBuildKind): string {
+    return `${kind.runtime}-${kind.quality}-${kind.flavor}`;
+}
+
 describe('Integration tests', () => {
 
     test('fetch and install build by version', async () => {
         for (const kind of buildKinds) {
             const build = await builds.fetchBuildByVersion(kind, '1.100');
-            assert.ok(build.commit);
+            assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
             await builds.installBuild(build, { forceReDownload: true });
 
             const executable = await builds.getBuildExecutable(build);
-            assert.ok(fs.existsSync(executable));
+            assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
         }
     });
 
     test('fetch builds', async () => {
         for (const kind of buildKinds) {
             let result = await builds.fetchBuilds(kind, undefined, undefined, true /* released only */);
-            assert.ok(result.length > 0);
+            assert.ok(result.length > 0, `Expected released builds to be fetched for build ${buildKindToString(kind)}`);
 
             result = await builds.fetchBuilds(kind, undefined, undefined, false /* released only */);
-            assert.ok(result.length > 0);
+            assert.ok(result.length > 0, `Expected all builds to be fetched for build ${buildKindToString(kind)}`);
         }
     });
 });
