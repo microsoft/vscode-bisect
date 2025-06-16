@@ -6,6 +6,7 @@
 import { mkdirSync, rmSync } from 'fs';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { join } from 'path';
+import { URL } from 'url';
 import { URI } from 'vscode-uri';
 import open from 'open';
 import kill from 'tree-kill';
@@ -215,14 +216,20 @@ class Launcher {
             if (build.flavor === Flavor.Cli) {
                 const output: string = data.toString().trim();
                 if (output.includes('github.com/login/device')) {
-                    const codeMatch = output.match(/code ([A-Z0-9-]+)/);
+                    const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
                     if (codeMatch) {
                         const code = codeMatch[1];
                         console.log(`${chalk.gray('[cli]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
                     }
                 } else if (output.includes('Open this link in your browser')) {
                     const url = output.substring('Open this link in your browser '.length);
-                    open(`${url}?vscode-version=${build.commit}`);
+                    try {
+                        const href = new URL(url).href;
+                        console.log(`${chalk.gray('[cli]')} Opening ${chalk.underline(href)} in your browser...`);
+                        open(`${href}?vscode-version=${build.commit}`);
+                    } catch (error) {
+                        console.log(`${chalk.gray('[cli]')} Invalid URL extracted: ${url}`);
+                    }
                 }
             }
         });
