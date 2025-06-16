@@ -37,7 +37,7 @@ export default async function main(argv: string[]): Promise<void> {
     program.addHelpText('beforeAll', `Version: ${chalk.green(require('../package.json').version)}\n`);
 
     program
-        .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
+        .addOption(new Option('-r, --runtime <desktop|web|vscode.dev>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .addOption(new Option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable']))

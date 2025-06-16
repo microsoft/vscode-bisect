@@ -19,7 +19,7 @@
     "type": "module",
     "scripts": {
         "compile": "tsc -p ./",
-        "test": "node --test",
+        "test": "node --test --test-reporter=spec",
         "build": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "prepare": "npm run build"
