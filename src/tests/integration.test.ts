@@ -13,15 +13,18 @@ setTesting(true);
 
 const platformFlavors = [Flavor.Default, Flavor.Cli];
 if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
-    platformFlavors.push(Flavor.Universal);
+    platformFlavors.push(Flavor.DarwinUniversal);
+} else if (platform === Platform.WindowsArm || platform === Platform.WindowsX64) {
+    platformFlavors.push(Flavor.WindowsUserInstaller);
+    platformFlavors.push(Flavor.WindowsSystemInstaller);
 }
 
 const buildKinds: IBuildKind[] = [];
 for (const quality of [Quality.Stable, Quality.Insider]) {
     for (const flavor of platformFlavors) {
         for (const runtime of [Runtime.DesktopLocal, Runtime.WebLocal]) {
-            if (flavor === Flavor.Cli && runtime === Runtime.WebLocal) {
-                continue; // CLI only when DesktopLocal
+            if (flavor !== Flavor.Default && runtime === Runtime.WebLocal) {
+                continue; // skip over some invalid combinations
             }
 
             buildKinds.push({ runtime, quality, flavor });
@@ -40,10 +43,13 @@ describe('Integration tests', () => {
             const build = await builds.fetchBuildByVersion(kind, '1.100');
             assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
-            await builds.installBuild(build, { forceReDownload: true });
+            const path = await builds.installBuild(build, { forceReDownload: true });
+            assert.ok(fs.existsSync(path), `Expected path to exist for build ${buildKindToString(kind)}`);
 
-            const executable = await builds.getBuildExecutable(build);
-            assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
+            if (kind.flavor === Flavor.Default || kind.flavor === Flavor.Cli || kind.flavor === Flavor.DarwinUniversal) {
+                const executable = await builds.getBuildExecutable(build);
+                assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
+            }
         });
     }
 

@@ -37,11 +37,11 @@ export default async function main(argv: string[]): Promise<void> {
     program.addHelpText('beforeAll', `Version: ${chalk.green(require('../package.json').version)}\n`);
 
     program
-        .addOption(new Option('-r, --runtime <runtime>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
+        .addOption(new Option('-r, --runtime <desktop|web|vscode.dev>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
-        .option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"')
-        .option('-f, --flavor <universal|cli>', 'flavor of a published build to test (only applies when testing desktop builds)')
+        .addOption(new Option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable']))
+        .addOption(new Option('-f, --flavor <universal|cli|win32-user|win32-system>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system']))
         .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
         .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')

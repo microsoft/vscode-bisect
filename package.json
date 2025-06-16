@@ -1,6 +1,6 @@
 {
     "name": "@vscode/vscode-bisect",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Bisect released VS Code builds to find bugs or performance issues similar to what git bisect supports.",
     "repository": {
         "type": "git",
@@ -19,7 +19,7 @@
     "type": "module",
     "scripts": {
         "compile": "tsc -p ./",
-        "test": "node --test",
+        "test": "node --test --test-reporter=spec",
         "build": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "prepare": "npm run build"

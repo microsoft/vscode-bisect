@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { mkdirSync, rmSync } from 'node:fs';
+import { promisify } from 'node:util';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { URL } from 'node:url';
@@ -57,8 +58,9 @@ class Launcher {
     async launch(build: IBuild, options?: { forceReDownload: boolean }): Promise<IInstance> {
 
         // Install (unless web remote)
+        let path: string | undefined;
         if (build.runtime !== Runtime.WebRemote) {
-            await builds.installBuild(build, options);
+            path = await builds.installBuild(build, options);
         }
 
         // Launch according to runtime
@@ -86,6 +88,11 @@ class Launcher {
 
             // Desktop
             case Runtime.DesktopLocal:
+                if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
+                    LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
+                    return this.runWindowsDesktopInstaller(path);
+                }
+
                 if (CONFIG.performance) {
                     LOGGER.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runDesktopPerformance(build);
@@ -93,6 +100,16 @@ class Launcher {
 
                 LOGGER.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
                 return this.launchElectronOrCLI(build);
+        }
+    }
+
+    private runWindowsDesktopInstaller(path: string): IInstance {
+        const cp = spawn(path, ['/silent']);
+
+        return {
+            async stop() {
+                cp.kill();
+            }
         }
     }
 
@@ -136,7 +153,6 @@ class Launcher {
         } finally {
             server?.stop();
         }
-
 
         return NOOP_INSTANCE;
     }
