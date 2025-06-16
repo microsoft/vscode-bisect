@@ -174,7 +174,7 @@ class Builds {
 
         // Unzip
         let destination: string;
-        if (runtime === Runtime.DesktopLocal && platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
+        if (runtime === Runtime.DesktopLocal && flavor === Flavor.Default && (platform === Platform.WindowsX64 || platform === Platform.WindowsArm)) {
             // zip does not contain a single top level folder to use...
             destination = path.substring(0, path.lastIndexOf('.zip'));
         } else {
@@ -391,7 +391,16 @@ class Builds {
         }
 
         // CLI
-        return join(buildPath, buildName);
+        switch (platform) {
+            case Platform.MacOSX64:
+            case Platform.MacOSArm:
+            case Platform.LinuxX64:
+            case Platform.LinuxArm:
+                return join(buildPath, buildName);
+            case Platform.WindowsX64:
+            case Platform.WindowsArm:
+                return join(buildPath, `${buildName}.exe`);
+        }
     }
 }
 
