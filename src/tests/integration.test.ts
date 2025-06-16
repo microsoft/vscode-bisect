@@ -13,7 +13,7 @@ setTesting(true);
 
 const platformFlavors = [Flavor.Default, Flavor.Cli];
 if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
-    platformFlavors.push(Flavor.Universal);
+    platformFlavors.push(Flavor.DarwinUniversal);
 }
 
 const buildKinds: IBuildKind[] = [];

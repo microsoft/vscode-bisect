@@ -36,6 +36,18 @@ export const VSCODE_DEV_URL = function (commit: string, quality: Quality) {
     return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/?vscode-version=${commit}`;
 }
 
+export enum Arch {
+    X64 = 'x64',
+    Arm64 = 'arm64'
+}
+
+export const arch = (() => {
+    if (process.arch === Arch.Arm64) {
+        return Arch.Arm64;
+    }
+    return Arch.X64;
+})();
+
 export enum Platform {
     MacOSX64 = 1,
     MacOSArm,
@@ -47,19 +59,21 @@ export enum Platform {
 
 export const platform = (() => {
     if (process.platform === 'win32') {
-        return process.arch === 'arm64' ? Platform.WindowsArm : Platform.WindowsX64;
+        return arch === Arch.Arm64 ? Platform.WindowsArm : Platform.WindowsX64;
     }
 
     if (process.platform === 'darwin') {
-        return process.arch === 'arm64' ? Platform.MacOSArm : Platform.MacOSX64;
+        return arch === Arch.Arm64 ? Platform.MacOSArm : Platform.MacOSX64;
     }
 
     if (process.platform === 'linux') {
-        return process.arch === 'arm64' ? Platform.LinuxArm : Platform.LinuxX64;
+        return arch === Arch.Arm64 ? Platform.LinuxArm : Platform.LinuxX64;
     }
 
     throw new Error('Unsupported platform.');
 })();
+
+
 
 export enum Runtime {
     WebLocal = 'web-local',
@@ -94,14 +108,20 @@ export function qualityFromString(value: unknown): Quality {
 
 export enum Flavor {
     Default = 'default',
-    Universal = 'universal',
+    DarwinUniversal = 'universal',
+    WindowsUserInstaller = 'win32-user',
+    WindowsSystemInstaller = 'win32-system',
     Cli = 'cli'
 }
 
 export function flavorFromString(value: unknown): Flavor {
     switch (value) {
         case 'universal':
-            return Flavor.Universal;
+            return Flavor.DarwinUniversal;
+        case 'win32-user':
+            return Flavor.WindowsUserInstaller;
+        case 'win32-system':
+            return Flavor.WindowsSystemInstaller;
         case 'cli':
             return Flavor.Cli;
         default:
