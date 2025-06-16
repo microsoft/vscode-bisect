@@ -90,9 +90,7 @@ class Launcher {
             case Runtime.DesktopLocal:
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
-                    await promisify(spawn)(path, ['/silent'], {});
-
-                    return NOOP_INSTANCE;
+                    return this.runWindowsDesktopInstaller(path);
                 }
 
                 if (CONFIG.performance) {
@@ -102,6 +100,16 @@ class Launcher {
 
                 LOGGER.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
                 return this.launchElectronOrCLI(build);
+        }
+    }
+
+    private runWindowsDesktopInstaller(path: string): IInstance {
+        const cp = spawn(path, ['/silent']);
+
+        return {
+            async stop() {
+                cp.kill();
+            }
         }
     }
 
@@ -145,7 +153,6 @@ class Launcher {
         } finally {
             server?.stop();
         }
-
 
         return NOOP_INSTANCE;
     }
