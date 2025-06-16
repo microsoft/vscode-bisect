@@ -231,14 +231,13 @@ class Builds {
             case Platform.MacOSArm:
                 return 'vscode_cli_darwin_arm64_cli.zip';
             case Platform.LinuxX64:
+                return 'vscode_cli_linux_x64_cli.zip';
             case Platform.LinuxArm:
-                return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
+                return 'vscode_cli_linux_arm64_cli.zip';
             case Platform.WindowsX64:
-            case Platform.WindowsArm: {
-                const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
-
-                return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}.zip` : `VSCode-win32-arm64-${buildMeta.productVersion}.zip`;
-            }
+                return 'vscode_cli_win32_x64_cli.zip';
+            case Platform.WindowsArm:
+                return 'vscode_cli_win32_arm64_cli.zip';
         }
     }
 
