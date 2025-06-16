@@ -221,6 +221,12 @@ class Launcher {
                             const code = codeMatch[1];
                             console.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
                         }
+                    } else if (output.includes('microsoft.com/devicelogin')) {
+                        const codeMatch = output.match(/code ([A-Z0-9]{9})/);
+                        if (codeMatch) {
+                            const code = codeMatch[1];
+                            console.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://microsoft.com/devicelogin')} and use code ${chalk.green(code)}`);
+                        }
                     } else if (output.includes('Open this link in your browser')) {
                         const url = output.substring('Open this link in your browser '.length);
                         try {
