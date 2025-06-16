@@ -231,9 +231,9 @@ class Builds {
             case Platform.MacOSArm:
                 return 'vscode_cli_darwin_arm64_cli.zip';
             case Platform.LinuxX64:
-                return 'vscode_cli_linux_x64_cli.zip';
+                return 'vscode_cli_linux_x64_cli.tar.gz';
             case Platform.LinuxArm:
-                return 'vscode_cli_linux_arm64_cli.zip';
+                return 'vscode_cli_linux_arm64_cli.tar.gz';
             case Platform.WindowsX64:
                 return 'vscode_cli_win32_x64_cli.zip';
             case Platform.WindowsArm:
