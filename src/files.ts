@@ -3,12 +3,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { spawnSync } from 'child_process';
-import { mkdirSync, promises, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { createHash } from 'crypto';
-import { BUILD_FOLDER, Platform, platform } from './constants';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, promises, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { unzipSync } from 'fflate';
+import { BUILD_FOLDER, Flavor, Platform, platform, Quality } from './constants.js';
 
 export async function exists(path: string): Promise<boolean> {
     try {
@@ -20,12 +20,28 @@ export async function exists(path: string): Promise<boolean> {
     }
 }
 
-export function getBuildPath(commit: string): string {
+export function getBuildPath(commit: string, quality: Quality, flavor: Flavor): string {
+    let uniqueFolderName: string;
     if (platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
-        return join(BUILD_FOLDER, commit.substring(0, 6)); // keep the folder path small for windows max path length restrictions
+        uniqueFolderName = commit.substring(0, 6); // keep the folder path small for windows max path length restrictions
+    } else {
+        uniqueFolderName = commit;
     }
 
-    return join(BUILD_FOLDER, commit);
+    const prefixes: string[] = [];
+    if (quality === Quality.Stable) {
+        prefixes.push('stable');
+    }
+
+    if (flavor !== Flavor.Default) {
+        prefixes.push(flavor);
+    }
+
+    if (prefixes.length > 0) {
+        uniqueFolderName = `${prefixes.join('-')}-${uniqueFolderName}`;
+    }
+
+    return join(BUILD_FOLDER, uniqueFolderName);
 }
 
 export async function unzip(source: string, destination: string): Promise<void> {

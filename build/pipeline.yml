@@ -4,7 +4,11 @@ trigger:
   branches:
     include:
       - main
-pr: none
+
+pr:
+  branches:
+    include:
+      - main
 
 resources:
   repositories:
@@ -28,11 +32,33 @@ extends:
 
         buildSteps:
           - script: npm ci
-            displayName: Install dependencies
-          
-          - script: npm run build
-            displayName: Build
+            displayName: Install and build
 
-        testPlatforms: []
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 22.x
+            architectures:
+              - x64
+              - arm64
+          - name: MacOS
+            nodeVersions:
+              - 22.x
+            architectures:
+              - x64
+              - arm64
+          - name: Windows
+            nodeVersions:
+              - 22.x
+            architectures:
+              - x64
+              - arm64
+
+        testSteps:
+          - script: npm ci
+            displayName: Install and build
+
+          - script: npm run test
+            displayName: Test npm package
 
         publishPackage: ${{ parameters.publishPackage }}

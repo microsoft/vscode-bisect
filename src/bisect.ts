@@ -6,9 +6,10 @@
 import prompts from 'prompts';
 import chalk from 'chalk';
 import open from 'open';
-import { builds, IBuild } from './builds';
-import { logTroubleshoot, Runtime } from './constants';
-import { launcher } from './launcher';
+import { rmSync } from 'node:fs';
+import { builds, IBuild, IBuildKind } from './builds.js';
+import { logTroubleshoot, USER_DATA_FOLDER, LOGGER } from './constants.js';
+import { launcher } from './launcher.js';
 
 enum BisectResponse {
     Good = 1,
@@ -23,15 +24,15 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start(runtime: Runtime = Runtime.WebLocal, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
+    async start({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
 
         // Resolve commits from input
-        const { goodCommit, badCommit } = await this.resolveCommits(runtime, goodCommitOrVersion, badCommitOrVersion);
+        const { goodCommit, badCommit } = await this.resolveCommits({ runtime, quality, flavor }, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds(runtime, goodCommit, badCommit, releasedOnly);
+        const buildsRange = await builds.fetchBuilds({runtime, quality, flavor}, goodCommit, badCommit, releasedOnly);
 
-        console.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
+        LOGGER.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 
         let goodBuild: IBuild | undefined = undefined;
         let badBuild: IBuild | undefined = undefined;
@@ -70,21 +71,21 @@ class Bisecter {
         }
     }
 
-    private async resolveCommits(runtime: Runtime, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
+    private async resolveCommits({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
         return {
-            goodCommit: await this.resolveCommit(runtime, goodCommitOrVersion),
-            badCommit: await this.resolveCommit(runtime, badCommitOrVersion)
+            goodCommit: await this.resolveCommit({ runtime, quality, flavor }, goodCommitOrVersion),
+            badCommit: await this.resolveCommit({ runtime, quality, flavor }, badCommitOrVersion)
         };
     }
 
-    private async resolveCommit(runtime: Runtime, commitOrVersion?: string) {
+    private async resolveCommit({ runtime, quality, flavor }: IBuildKind, commitOrVersion?: string) {
         if (!commitOrVersion) {
             return undefined;
         }
 
         if (/^\d+\.\d+$/.test(commitOrVersion)) {
-            const commit = (await builds.fetchBuildByVersion(runtime, commitOrVersion)).commit;
-            console.log(`${chalk.gray('[build]')} latest insiders build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
+            const commit = (await builds.fetchBuildByVersion({ runtime, quality, flavor }, commitOrVersion)).commit;
+            LOGGER.log(`${chalk.gray('[build]')} latest build with version ${chalk.green(commitOrVersion)} is ${chalk.green(commit)}.`);
             return commit;
         }
 
@@ -97,7 +98,7 @@ class Bisecter {
 
     private async finishBisect(badBuild: IBuild | undefined, goodBuild: IBuild | undefined): Promise<void> {
         if (goodBuild && badBuild) {
-            console.log(`${chalk.gray('[build]')} ${chalk.green(badBuild.commit)} is the first bad commit after ${chalk.green(goodBuild.commit)}.`);
+            LOGGER.log(`${chalk.gray('[build]')} ${chalk.green(badBuild.commit)} is the first bad commit after ${chalk.green(goodBuild.commit)}.`);
 
             const response = await prompts([
                 {
@@ -113,18 +114,18 @@ class Bisecter {
                 open(`https://github.com/microsoft/vscode/compare/${goodBuild.commit}...${badBuild.commit}`);
             }
 
-            console.log(`
+            LOGGER.log(`
 Run the following commands to continue bisecting via git in a folder where VS Code is checked out to:
 
 ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bisect good ${goodBuild.commit}`)}
 
 `);
         } else if (badBuild) {
-            console.log(`${chalk.gray('[build]')} ${chalk.red('All builds are bad!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
+            LOGGER.log(`${chalk.gray('[build]')} ${chalk.red('All builds are bad!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
         } else if (goodBuild) {
-            console.log(`${chalk.gray('[build]')} ${chalk.green('All builds are good!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
+            LOGGER.log(`${chalk.gray('[build]')} ${chalk.green('All builds are good!')} Try running with ${chalk.green('--releasedOnly')} to support older builds.`);
         } else {
-            console.log(`${chalk.gray('[build]')} ${chalk.red('No builds bisected. Bisect needs at least 2 builds from "main" branch to work.')}`);
+            LOGGER.log(`${chalk.gray('[build]')} ${chalk.red('No builds bisected. Bisect needs at least 2 builds from "main" branch to work.')}`);
         }
     }
 
@@ -156,7 +157,8 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     choices: [
                         { title: 'Good', value: 'good' },
                         { title: 'Bad', value: 'bad' },
-                        { title: 'Retry', value: 'retry' }
+                        { title: 'Retry', value: 'retry' },
+                        { title: 'Retry (fresh user data dir)', value: 'retry-fresh' }
                     ]
                 }
             ]) : await prompts([
@@ -166,6 +168,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to restart ${chalk.green(build.commit)}?`,
                     choices: [
                         { title: 'Yes', value: 'retry' },
+                        { title: 'Yes (fresh user data dir)', value: 'retry-fresh' },
                         { title: 'No', value: 'no' }
                     ]
                 }
@@ -173,13 +176,17 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
 
             await instance.stop();
 
-            if (response.status === 'retry') {
+            if (response.status === 'retry-fresh') {
+                this.cleanUserDataDir();
+            }
+
+            if (response.status === 'retry' || response.status === 'retry-fresh') {
                 return this.tryBuild(build, { forceReDownload: false, isBisecting: options.isBisecting });
             }
 
             return response.status === 'good' ? BisectResponse.Good : response.status === 'bad' ? BisectResponse.Bad : BisectResponse.Quit;
         } catch (error) {
-            console.log(`${chalk.red('\n[error]')} ${error}\n`);
+            LOGGER.log(`${chalk.red('\n[error]')} ${error}\n`);
 
             const response = await prompts([
                 {
@@ -188,18 +195,32 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     message: `Would you like to retry?`,
                     choices: [
                         { title: 'Yes', value: 'yes' },
+                        { title: 'Yes (fresh user data dir)', value: 'yes-fresh' },
                         { title: 'No', value: 'no' }
                     ]
                 }
             ]);
 
-            if (response.status === 'yes') {
+            if (response.status === 'yes-fresh') {
+                this.cleanUserDataDir();
+            }
+
+            if (response.status === 'yes' || response.status === 'yes-fresh') {
                 return this.tryBuild(build, { forceReDownload: true, isBisecting: options.isBisecting });
             }
 
             logTroubleshoot();
 
             return BisectResponse.Quit;
+        }
+    }
+
+    private cleanUserDataDir(): void {
+        try {
+            LOGGER.log(`${chalk.gray('[build]')} cleaning user data directory...`);
+            rmSync(USER_DATA_FOLDER, { recursive: true });
+        } catch (error) {
+            // Ignore errors if directory doesn't exist
         }
     }
 }

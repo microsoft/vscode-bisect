@@ -1,7 +1,7 @@
 {
     "name": "@vscode/vscode-bisect",
-    "version": "0.5.6",
-    "description": "Bisect released VS Code Insider builds to find bugs or performance issues similar to what git bisect supports.",
+    "version": "1.0.0",
+    "description": "Bisect released VS Code builds to find bugs or performance issues similar to what git bisect supports.",
     "repository": {
         "type": "git",
         "url": "https://github.com/microsoft/vscode-bisect"
@@ -16,32 +16,34 @@
     "license": "MIT",
     "authors": "microsoft",
     "main": "out/index",
+    "type": "module",
     "scripts": {
         "compile": "tsc -p ./",
+        "test": "node --test",
         "build": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "prepare": "npm run build"
     },
     "engines": {
-        "node": ">= 16"
+        "node": ">= 20"
     },
     "dependencies": {
-        "@vscode/vscode-perf": "^0.0.19",
-        "chalk": "^4.x",
-        "commander": "^9.4.0",
+        "@vscode/vscode-perf": "^0.0.22",
+        "chalk": "^5.x",
+        "commander": "^14.x",
         "fflate": "^0.8.2",
-        "follow-redirects": "^1.15.6",
-        "open": "^8.4.0",
+        "follow-redirects": "^1.15.9",
+        "open": "^10.x",
         "progress": "^2.0.3",
         "prompts": "^2.4.2",
         "simple-git": "^3.16.0",
         "tree-kill": "^1.2.2",
-        "vscode-uri": "^3.0.8"
+        "vscode-uri": "^3.x"
     },
     "devDependencies": {
         "@types/follow-redirects": "^1.x",
         "@types/node": "20.x",
-        "@types/progress": "^2.0.7",
+        "@types/progress": "^2.x",
         "@types/prompts": "^2.x",
         "typescript": "5.x"
     }

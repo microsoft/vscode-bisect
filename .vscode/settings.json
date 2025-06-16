@@ -22,4 +22,39 @@
     "git.branchProtectionPrompt": "alwaysCommitToNewBranch",
     "git.branchRandomName.enable": true,
     "git.pullBeforeCheckout": true,
+    "chat.instructionsFilesLocations": {
+        "src": true,
+        ".vscode": true
+    },
+    "chat.modeFilesLocations": {
+        ".vscode": true
+    },
+    "chat.promptFilesLocations": {
+        "src": true,
+        ".vscode": true
+    },
+    "[instructions]": {
+        "editor.quickSuggestions": {
+			"comments": "off",
+            "strings": "off",
+            "other": "off"
+		},
+        "editor.wordWrap": "bounded"
+    },
+    "[prompt]": {
+        "editor.quickSuggestions": {
+			"comments": "off",
+            "strings": "off",
+            "other": "off"
+		},
+        "editor.wordWrap": "bounded"
+    },
+    "[chatmode]": {
+        "editor.quickSuggestions": {
+			"comments": "off",
+            "strings": "off",
+            "other": "off"
+		},
+        "editor.wordWrap": "bounded"
+    }
 }

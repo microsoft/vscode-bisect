@@ -3,17 +3,18 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
-import { join } from 'path';
+import { mkdirSync, rmSync } from 'node:fs';
+import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
+import { join } from 'node:path';
+import { URL } from 'node:url';
 import { URI } from 'vscode-uri';
 import open from 'open';
 import kill from 'tree-kill';
-import { builds, IBuild } from './builds';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL } from './constants';
-import { mkdirSync, rmSync } from 'fs';
-import { exists } from './files';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
+import { builds, IBuild } from './builds.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor } from './constants.js';
+import { exists } from './files.js';
 
 export interface IInstance {
 
@@ -66,32 +67,32 @@ class Launcher {
             // Web (local)
             case Runtime.WebLocal:
                 if (CONFIG.performance) {
-                    console.log(`${chalk.gray('[build]')} starting local web build ${chalk.green(build.commit)} multiple times and measuring performance...`);
+                    LOGGER.log(`${chalk.gray('[build]')} starting local web build ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runWebPerformance(build);
                 }
 
-                console.log(`${chalk.gray('[build]')} starting local web build ${chalk.green(build.commit)}...`);
+                LOGGER.log(`${chalk.gray('[build]')} starting local web build ${chalk.green(build.commit)}...`);
                 return this.launchLocalWeb(build);
 
             // Web (remote)
             case Runtime.WebRemote:
                 if (CONFIG.performance) {
-                    console.log(`${chalk.gray('[build]')} opening insiders.vscode.dev ${chalk.green(build.commit)} multiple times and measuring performance...`);
+                    LOGGER.log(`${chalk.gray('[build]')} opening vscode.dev ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runWebPerformance(build);
                 }
 
-                console.log(`${chalk.gray('[build]')} opening insiders.vscode.dev ${chalk.green(build.commit)}...`);
+                LOGGER.log(`${chalk.gray('[build]')} opening vscode.dev ${chalk.green(build.commit)}...`);
                 return this.launchRemoteWeb(build);
 
             // Desktop
             case Runtime.DesktopLocal:
                 if (CONFIG.performance) {
-                    console.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)} multiple times and measuring performance...`);
+                    LOGGER.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runDesktopPerformance(build);
                 }
 
-                console.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)}...`);
-                return this.launchElectron(build);
+                LOGGER.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
+                return this.launchElectronOrCLI(build);
         }
     }
 
@@ -120,7 +121,7 @@ class Launcher {
 
         // Web remote: use remote URL
         else {
-            url = VSCODE_DEV_URL(build.commit);
+            url = VSCODE_DEV_URL(build.commit, build.quality);
         }
 
         try {
@@ -174,9 +175,7 @@ class Launcher {
 
         return new Promise<IWebInstance>(resolve => {
             cp.stdout.on('data', data => {
-                if (LOGGER.verbose) {
-                    console.log(`${chalk.gray('[server]')}: ${data.toString()}`);
-                }
+                LOGGER.trace(`${chalk.gray('[server]')}: ${data.toString()}`);
 
                 const matches = Launcher.WEB_AVAILABLE_REGEX.exec(data.toString());
                 const url = matches?.[1];
@@ -186,84 +185,88 @@ class Launcher {
             });
 
             cp.stderr.on('data', data => {
-                if (LOGGER.verbose) {
-                    console.log(`${chalk.red('[server]')}: ${data.toString()}`);
-                }
+                LOGGER.trace(`${chalk.red('[server]')}: ${data.toString()}`);
             });
         });
     }
 
     private async launchRemoteWeb(build: IBuild): Promise<IInstance> {
-        open(VSCODE_DEV_URL(build.commit));
+        open(VSCODE_DEV_URL(build.commit, build.quality));
 
         return NOOP_INSTANCE;
     }
 
-    private async launchElectron(build: IBuild): Promise<IInstance> {
+    private async launchElectronOrCLI(build: IBuild): Promise<IInstance> {
         const cp = await this.spawnBuild(build);
 
         async function stop() {
             cp.kill();
         }
 
-        cp.stdout.on('data', data => {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.gray('[electron]')}: ${data.toString()}`);
+        return new Promise<IInstance>(resolve => {
+            cp.stdout.on('data', data => {
+                LOGGER.trace(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
+
+                if (build.flavor === Flavor.Cli) {
+                    const output: string = data.toString().trim();
+                    if (output.includes('github.com/login/device')) {
+                        const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
+                        if (codeMatch) {
+                            const code = codeMatch[1];
+                            LOGGER.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
+                        }
+                    } else if (output.includes('microsoft.com/devicelogin')) {
+                        const codeMatch = output.match(/code ([A-Z0-9]{9})/);
+                        if (codeMatch) {
+                            const code = codeMatch[1];
+                            LOGGER.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://microsoft.com/devicelogin')} and use code ${chalk.green(code)}`);
+                        }
+                    } else if (output.includes('Open this link in your browser')) {
+                        const url = output.substring('Open this link in your browser '.length);
+                        try {
+                            const href = new URL(url).href;
+                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
+                            open(`${href}?vscode-version=${build.commit}`);
+
+                            return resolve({ stop });
+                        } catch (error) {
+                            LOGGER.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
+                        }
+                    }
+                }
+            });
+
+            cp.stderr.on('data', data => {
+                LOGGER.trace(`${chalk.red(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
+            });
+
+            if (build.flavor !== Flavor.Cli) {
+                return resolve({ stop });
             }
         });
-
-        cp.stderr.on('data', data => {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.red('[electron]')}: ${data.toString()}`);
-            }
-        });
-
-        return { stop }
     }
 
     private async spawnBuild(build: IBuild): Promise<ChildProcessWithoutNullStreams> {
         const executable = await this.getExecutablePath(build);
-        if (LOGGER.verbose) {
-            console.log(`${chalk.gray('[build]')} starting build via ${chalk.green(executable)}...`);
-        }
+        LOGGER.trace(`${chalk.gray('[build]')} starting build via ${chalk.green(executable)}...`);
 
-        const args = [
+        const args = build.flavor === Flavor.Cli ? ['tunnel'] : [
             '--accept-server-license-terms',
             '--extensions-dir',
             EXTENSIONS_FOLDER,
             '--skip-release-notes'
         ];
 
-        if (build.runtime === Runtime.DesktopLocal) {
+        if (build.runtime === Runtime.DesktopLocal && build.flavor !== Flavor.Cli) {
             args.push(
-
                 '--disable-updates',
                 '--user-data-dir',
                 USER_DATA_FOLDER,
-                '--no-cached-data',
-                '--disable-telemetry' // only disable telemetry when not running performance tests to be able to look at perf marks
+                '--disable-telemetry'
             );
-
         }
 
-        switch (build.runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                    case Platform.MacOSArm:
-                    case Platform.LinuxX64:
-                    case Platform.LinuxArm:
-                        return spawn('bash', [executable, ...args]);
-                    case Platform.WindowsX64:
-                    case Platform.WindowsArm:
-                        return spawn(executable, args);
-                }
-
-
-            case Runtime.DesktopLocal:
-                return spawn(executable, args);
-        }
+        return spawn(`"${executable}"`, args, { shell: true });
     }
 
     private async getExecutablePath(build: IBuild): Promise<string> {

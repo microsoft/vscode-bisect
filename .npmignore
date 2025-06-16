@@ -1,7 +1,8 @@
+.vscode/
+build/
 src/
+out/tests/
 .gitignore
 tsconfig.json
 **/*.js.map
 package-lock.json
-.vscode/
-build/
