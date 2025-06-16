@@ -110,7 +110,17 @@ export function flavorFromString(value: unknown): Flavor {
 }
 
 export const LOGGER = {
-    verbose: false
+    verbose: false,
+    log: (message: string) => {
+        if (!isTesting() || LOGGER.verbose) {
+            console.log(message);
+        }
+    },
+    trace: (message: string) => {
+        if (LOGGER.verbose) {
+            console.log(message);
+        }
+    }
 }
 
 export const CONFIG = {
@@ -125,4 +135,13 @@ export function logTroubleshoot(): void {
 - run ${chalk.green('vscode-bisect --verbose')} for more detailed output
 - run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
 - run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);
+}
+
+let TESTING = false;
+export function setTesting(value: boolean) {
+    TESTING = value;
+}
+
+export function isTesting(): boolean {
+    return TESTING;
 }

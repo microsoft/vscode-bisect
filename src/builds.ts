@@ -98,7 +98,7 @@ class Builds {
 
     private async fetchAllBuilds({ runtime, quality, flavor }: IBuildKind, releasedOnly = false): Promise<IBuild[]> {
         const url = `https://update.code.visualstudio.com/api/commits/${quality}/${this.getBuildApiName({ runtime, quality, flavor })}?released=${releasedOnly}`;
-        console.log(`${chalk.gray('[build]')} fetching all builds from ${chalk.green(url)}...`);
+        LOGGER.log(`${chalk.gray('[build]')} fetching all builds from ${chalk.green(url)}...`);
         const commits = await jsonGet<Array<string>>(url);
 
         return commits.map(commit => ({ commit, runtime, quality, flavor }));
@@ -147,21 +147,19 @@ class Builds {
 
         const pathExists = await exists(path);
         if (pathExists && !options?.forceReDownload) {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
-            }
+            LOGGER.trace(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
 
             return; // assume the build is cached
         }
 
         if (pathExists && options?.forceReDownload) {
-            console.log(`${chalk.gray('[build]')} deleting ${chalk.green(getBuildPath(commit, quality, flavor))} and retrying download`);
+            LOGGER.log(`${chalk.gray('[build]')} deleting ${chalk.green(getBuildPath(commit, quality, flavor))} and retrying download`);
             rmSync(getBuildPath(commit, quality, flavor), { recursive: true });
         }
 
         // Download
         const { url, sha256hash: expectedSHA256 } = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
-        console.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
+        LOGGER.log(`${chalk.gray('[build]')} downloading build from ${chalk.green(url)}...`);
         await fileGet(url, path);
 
         // Validate SHA256 Checksum
@@ -169,7 +167,7 @@ class Builds {
         if (expectedSHA256 !== computedSHA256) {
             throw new Error(`${chalk.gray('[build]')} ${chalk.red('✘')} expected SHA256 checksum (${expectedSHA256}) does not match with download (${computedSHA256})`);
         } else {
-            console.log(`${chalk.gray('[build]')} ${chalk.green('✔︎')} expected SHA256 checksum matches with download`);
+            LOGGER.log(`${chalk.gray('[build]')} ${chalk.green('✔︎')} expected SHA256 checksum matches with download`);
         }
 
         // Unzip
@@ -181,7 +179,7 @@ class Builds {
             // zip contains a single top level folder to use
             destination = dirname(path);
         }
-        console.log(`${chalk.gray('[build]')} unzipping ${chalk.green(path)} to ${chalk.green(destination)}...`);
+        LOGGER.log(`${chalk.gray('[build]')} unzipping ${chalk.green(path)} to ${chalk.green(destination)}...`);
         await unzip(path, destination);
     }
 

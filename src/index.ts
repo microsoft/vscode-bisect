@@ -64,7 +64,7 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
 
     if (opts.reset) {
         try {
-            console.log(`${chalk.gray('[build]')} deleting cache directory ${chalk.green(ROOT)}`);
+            LOGGER.log(`${chalk.gray('[build]')} deleting cache directory ${chalk.green(ROOT)}`);
             rmSync(ROOT, { recursive: true });
         } catch (error) { }
     }
@@ -163,7 +163,7 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
             await bisecter.start(buildKind, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
         }
     } catch (error) {
-        console.log(`${chalk.red('\n[error]')} ${error}`);
+        LOGGER.log(`${chalk.red('\n[error]')} ${error}`);
         logTroubleshoot();
         process.exit(1);
     }

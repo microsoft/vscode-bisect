@@ -167,7 +167,7 @@ VSCode Bisect is a command-line tool that implements binary search (bisecting) f
 
 ### **Logging Pattern**
 ```typescript
-console.log(`${chalk.gray('[component]')} message with ${chalk.green('values')}`);
+Logger.log(`${chalk.gray('[component]')} message with ${chalk.green('values')}`);
 ```
 
 ### **Error Handling Pattern**

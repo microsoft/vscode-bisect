@@ -7,7 +7,9 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import { builds, IBuildKind } from '../builds.js';
-import { Flavor, Platform, platform, Quality, Runtime } from '../constants.js';
+import { Flavor, Platform, platform, Quality, Runtime, setTesting } from '../constants.js';
+
+setTesting(true);
 
 const platformFlavors = [Flavor.Default, Flavor.Cli];
 if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
@@ -29,8 +31,8 @@ function buildKindToString(kind: IBuildKind): string {
 
 describe('Integration tests', () => {
 
-    test('fetch and install build by version', async () => {
-        for (const kind of buildKinds) {
+    for (const kind of buildKinds) {
+        test(`fetch and install build by version: ${buildKindToString(kind)}`, async () => {
             const build = await builds.fetchBuildByVersion(kind, '1.100');
             assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
@@ -38,16 +40,16 @@ describe('Integration tests', () => {
 
             const executable = await builds.getBuildExecutable(build);
             assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
-        }
-    });
+        });
+    }
 
-    test('fetch builds', async () => {
-        for (const kind of buildKinds) {
+    for (const kind of buildKinds) {
+        test(`fetch builds: ${buildKindToString(kind)}`, async () => {
             let result = await builds.fetchBuilds(kind, undefined, undefined, true /* released only */);
             assert.ok(result.length > 0, `Expected released builds to be fetched for build ${buildKindToString(kind)}`);
 
             result = await builds.fetchBuilds(kind, undefined, undefined, false /* released only */);
             assert.ok(result.length > 0, `Expected all builds to be fetched for build ${buildKindToString(kind)}`);
-        }
-    });
+        });
+    }
 });
