@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from 'chalk';
-import { mkdirSync } from 'fs';
+import { mkdirSync } from 'node:fs';
 import simpleGit from 'simple-git';
 import { GIT_FOLDER, GIT_REPO, GIT_VSCODE_FOLDER } from './constants.js';
 import { exists } from './files.js';

@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from 'chalk';
-import { createRequire } from 'module';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const require = createRequire(import.meta.url);
 

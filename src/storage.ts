@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { promises } from 'fs';
+import { promises } from 'node:fs';
 import { STORAGE_FILE } from './constants.js';
 
 class Storage {

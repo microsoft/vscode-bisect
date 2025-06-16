@@ -19,6 +19,7 @@
     "type": "module",
     "scripts": {
         "compile": "tsc -p ./",
+        "test": "node --test",
         "build": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "prepare": "npm run build"

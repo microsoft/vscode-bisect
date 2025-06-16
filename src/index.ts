@@ -5,10 +5,10 @@
 
 import chalk from 'chalk';
 import { program, Option } from 'commander';
-import { rmSync, truncateSync } from 'fs';
+import { rmSync, truncateSync } from 'node:fs';
 import prompts from 'prompts';
-import { resolve } from 'path';
-import { createRequire } from 'module';
+import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
 import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime, runtimeFromString } from './constants.js';

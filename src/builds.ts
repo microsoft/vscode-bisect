@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from 'chalk';
-import { dirname, join } from 'path';
-import { rmSync } from 'fs';
+import { dirname, join } from 'node:path';
+import { rmSync } from 'node:fs';
 import { Flavor, LOGGER, Platform, platform, Quality, Runtime } from './constants.js';
 import { fileGet, jsonGet } from './fetch.js';
 import { computeSHA256, exists, getBuildPath, unzip } from './files.js';
@@ -242,7 +242,7 @@ class Builds {
         }
     }
 
-    async getBuildName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
+    private async getBuildName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
 
         // Server
         if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {

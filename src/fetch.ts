@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import followRedirects from 'follow-redirects';
-import { createWriteStream, promises } from 'fs';
-import { dirname } from 'path';
-import { OutgoingHttpHeaders } from 'http';
+import { createWriteStream, promises } from 'node:fs';
+import { dirname } from 'node:path';
+import { OutgoingHttpHeaders } from 'node:http';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
 

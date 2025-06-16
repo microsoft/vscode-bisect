@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { spawnSync } from 'child_process';
-import { mkdirSync, promises, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { createHash } from 'crypto';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, promises, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { unzipSync } from 'fflate';
 import { BUILD_FOLDER, Flavor, Platform, platform, Quality } from './constants.js';
 
