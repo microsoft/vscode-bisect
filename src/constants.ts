@@ -67,6 +67,17 @@ export enum Runtime {
     DesktopLocal
 }
 
+export function runtimeFromString(value: unknown): Runtime {
+    switch (value) {
+        case 'web':
+            return Runtime.WebLocal;
+        case 'vscode.dev':
+            return Runtime.WebRemote;
+        default:
+            return Runtime.DesktopLocal;
+    }
+}
+
 export enum Quality {
     Insider = 'insider',
     Stable = 'stable'

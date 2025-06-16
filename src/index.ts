@@ -11,7 +11,7 @@ import { resolve } from 'path';
 import { createRequire } from 'module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
-import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime } from './constants.js';
+import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime, runtimeFromString } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
 import { exists } from './files.js';
 
@@ -127,17 +127,8 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
     }
 
     try {
-        let runtime: Runtime;
-        if (opts.runtime === 'web') {
-            runtime = Runtime.WebLocal;
-        } else if (opts.runtime === 'vscode.dev') {
-            runtime = Runtime.WebRemote;
-        } else {
-            runtime = Runtime.DesktopLocal;
-        }
-
+        const runtime = runtimeFromString(opts.runtime);
         const quality = qualityFromString(opts.quality);
-
         const flavor = flavorFromString(opts.flavor);
         if (flavor !== Flavor.Default && runtime !== Runtime.DesktopLocal) {
             throw new Error(`Flavor ${chalk.green(flavor)} is only supported for desktop builds.`);
