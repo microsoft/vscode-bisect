@@ -136,7 +136,7 @@ class Builds {
         }
     }
 
-    async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<void> {
+    async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string> {
         const buildName = await this.getBuildArchiveName({ runtime, commit, quality, flavor });
 
         const path = join(getBuildPath(commit, quality, flavor), buildName);
@@ -145,7 +145,7 @@ class Builds {
         if (pathExists && !options?.forceReDownload) {
             LOGGER.trace(`${chalk.gray('[build]')} using ${chalk.green(path)} for the next build to try`);
 
-            return; // assume the build is cached
+            return path; // assume the build is cached
         }
 
         if (pathExists && options?.forceReDownload) {
@@ -166,17 +166,23 @@ class Builds {
             LOGGER.log(`${chalk.gray('[build]')} ${chalk.green('✔︎')} expected SHA256 checksum matches with download`);
         }
 
-        // Unzip
-        let destination: string;
-        if ((runtime === Runtime.DesktopLocal || runtime === Runtime.WebLocal) && flavor === Flavor.Default && (platform === Platform.WindowsX64 || platform === Platform.WindowsArm)) {
-            // zip does not contain a single top level folder to use...
-            destination = path.substring(0, path.lastIndexOf('.zip'));
-        } else {
-            // zip contains a single top level folder to use
-            destination = dirname(path);
+        // Unzip (unless its an installer)
+        if (flavor === Flavor.Default || flavor === Flavor.Cli || flavor === Flavor.DarwinUniversal) {
+            let destination: string;
+            if ((runtime === Runtime.DesktopLocal || runtime === Runtime.WebLocal) && flavor === Flavor.Default && (platform === Platform.WindowsX64 || platform === Platform.WindowsArm)) {
+                // zip does not contain a single top level folder to use...
+                destination = path.substring(0, path.lastIndexOf('.zip'));
+            } else {
+                // zip contains a single top level folder to use
+                destination = dirname(path);
+            }
+            LOGGER.log(`${chalk.gray('[build]')} unzipping ${chalk.green(path)} to ${chalk.green(destination)}...`);
+            await unzip(path, destination);
+    
+            return destination;
         }
-        LOGGER.log(`${chalk.gray('[build]')} unzipping ${chalk.green(path)} to ${chalk.green(destination)}...`);
-        await unzip(path, destination);
+
+        return path;
     }
 
     private async getBuildArchiveName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {

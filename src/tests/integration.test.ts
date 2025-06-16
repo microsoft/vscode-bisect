@@ -43,10 +43,13 @@ describe('Integration tests', () => {
             const build = await builds.fetchBuildByVersion(kind, '1.100');
             assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
-            await builds.installBuild(build, { forceReDownload: true });
+            const path = await builds.installBuild(build, { forceReDownload: true });
+            assert.ok(fs.existsSync(path), `Expected path to exist for build ${buildKindToString(kind)}`);
 
-            const executable = await builds.getBuildExecutable(build);
-            assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
+            if (kind.flavor === Flavor.Default || kind.flavor === Flavor.Cli || kind.flavor === Flavor.DarwinUniversal) {
+                const executable = await builds.getBuildExecutable(build);
+                assert.ok(fs.existsSync(executable), `Expected executable to exist for build ${buildKindToString(kind)}`);
+            }
         });
     }
 
