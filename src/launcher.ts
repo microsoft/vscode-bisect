@@ -208,39 +208,45 @@ class Launcher {
             cp.kill();
         }
 
-        cp.stdout.on('data', data => {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
-            }
+        return new Promise<IInstance>(resolve => {
+            cp.stdout.on('data', data => {
+                if (LOGGER.verbose) {
+                    console.log(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
+                }
 
-            if (build.flavor === Flavor.Cli) {
-                const output: string = data.toString().trim();
-                if (output.includes('github.com/login/device')) {
-                    const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
-                    if (codeMatch) {
-                        const code = codeMatch[1];
-                        console.log(`${chalk.gray('[cli]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
-                    }
-                } else if (output.includes('Open this link in your browser')) {
-                    const url = output.substring('Open this link in your browser '.length);
-                    try {
-                        const href = new URL(url).href;
-                        console.log(`${chalk.gray('[cli]')} Opening ${chalk.underline(href)} in your browser...`);
-                        open(`${href}?vscode-version=${build.commit}`);
-                    } catch (error) {
-                        console.log(`${chalk.gray('[cli]')} Invalid URL extracted: ${url}`);
+                if (build.flavor === Flavor.Cli) {
+                    const output: string = data.toString().trim();
+                    if (output.includes('github.com/login/device')) {
+                        const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
+                        if (codeMatch) {
+                            const code = codeMatch[1];
+                            console.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
+                        }
+                    } else if (output.includes('Open this link in your browser')) {
+                        const url = output.substring('Open this link in your browser '.length);
+                        try {
+                            const href = new URL(url).href;
+                            console.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
+                            open(`${href}?vscode-version=${build.commit}`);
+
+                            return resolve({ stop });
+                        } catch (error) {
+                            console.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
+                        }
                     }
                 }
+            });
+
+            cp.stderr.on('data', data => {
+                if (LOGGER.verbose) {
+                    console.log(`${chalk.red(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
+                }
+            });
+
+            if (build.flavor !== Flavor.Cli) {
+                return resolve({ stop });
             }
         });
-
-        cp.stderr.on('data', data => {
-            if (LOGGER.verbose) {
-                console.log(`${chalk.red(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
-            }
-        });
-
-        return { stop }
     }
 
     private async spawnBuild(build: IBuild): Promise<ChildProcessWithoutNullStreams> {
