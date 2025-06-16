@@ -41,7 +41,7 @@ export default async function main(argv: string[]): Promise<void> {
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"')
-        .option('-f, --flavor <universal>', 'flavor of a published build to test (only applies when testing desktop builds)')
+        .option('-f, --flavor <universal|cli>', 'flavor of a published build to test (only applies when testing desktop builds)')
         .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
         .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')

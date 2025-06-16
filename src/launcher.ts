@@ -12,8 +12,9 @@ import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor } from './constants.js';
 import { exists } from './files.js';
+import { FlateErrorCode } from 'fflate';
 
 export interface IInstance {
 
@@ -90,8 +91,8 @@ class Launcher {
                     return this.runDesktopPerformance(build);
                 }
 
-                console.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)}...`);
-                return this.launchElectron(build);
+                console.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
+                return this.launchElectronOrCLI(build);
         }
     }
 
@@ -199,7 +200,7 @@ class Launcher {
         return NOOP_INSTANCE;
     }
 
-    private async launchElectron(build: IBuild): Promise<IInstance> {
+    private async launchElectronOrCLI(build: IBuild): Promise<IInstance> {
         const cp = await this.spawnBuild(build);
 
         async function stop() {
@@ -208,13 +209,27 @@ class Launcher {
 
         cp.stdout.on('data', data => {
             if (LOGGER.verbose) {
-                console.log(`${chalk.gray('[electron]')}: ${data.toString()}`);
+                console.log(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
+            }
+
+            if (build.flavor === Flavor.Cli) {
+                const output: string = data.toString().trim();
+                if (output.includes('github.com/login/device')) {
+                    const codeMatch = output.match(/code ([A-Z0-9-]+)/);
+                    if (codeMatch) {
+                        const code = codeMatch[1];
+                        console.log(`${chalk.gray('[cli]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
+                    }
+                } else if (output.includes('Open this link in your browser')) {
+                    const url = output.substring('Open this link in your browser '.length);
+                    open(`${url}?vscode-version=${build.commit}`);
+                }
             }
         });
 
         cp.stderr.on('data', data => {
             if (LOGGER.verbose) {
-                console.log(`${chalk.red('[electron]')}: ${data.toString()}`);
+                console.log(`${chalk.red(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
             }
         });
 
@@ -227,14 +242,14 @@ class Launcher {
             console.log(`${chalk.gray('[build]')} starting build via ${chalk.green(executable)}...`);
         }
 
-        const args = [
+        const args = build.flavor === Flavor.Cli ? ['tunnel'] : [
             '--accept-server-license-terms',
             '--extensions-dir',
             EXTENSIONS_FOLDER,
             '--skip-release-notes'
         ];
 
-        if (build.runtime === Runtime.DesktopLocal) {
+        if (build.runtime === Runtime.DesktopLocal && build.flavor !== Flavor.Cli) {
             args.push(
                 '--disable-updates',
                 '--user-data-dir',
