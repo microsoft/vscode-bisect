@@ -28,12 +28,12 @@ export const DEFAULT_PERFORMANCE_FILE = join(ROOT, 'startup-perf.txt');
 export const PERFORMANCE_RUNS = 10;
 export const PERFORMANCE_RUN_TIMEOUT = 60000;
 
-export const VSCODE_DEV_URL = function (commit: string, quality: 'insider' | 'stable') {
+export const VSCODE_DEV_URL = function (commit: string, quality: Quality) {
     if (CONFIG.token) {
-        return `https://${quality === 'insider' ? 'insiders.' : ''}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
+        return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
     }
 
-    return `https://${quality === 'insider' ? 'insiders.' : ''}vscode.dev/?vscode-version=${commit}`;
+    return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/?vscode-version=${commit}`;
 }
 
 export enum Platform {
@@ -65,6 +65,28 @@ export enum Runtime {
     WebLocal = 1,
     WebRemote,
     DesktopLocal
+}
+
+export enum Quality {
+    Insider = 'insider',
+    Stable = 'stable'
+}
+
+export enum Flavor {
+    Default = 'default',
+    Universal = 'universal',
+    Cli = 'cli'
+}
+
+export function flavorFromString(value: unknown): Flavor {
+    switch (value) {
+        case 'universal':
+            return Flavor.Universal;
+        case 'cli':
+            return Flavor.Cli;
+        default:
+            return Flavor.Default;
+    }
 }
 
 export const LOGGER = {

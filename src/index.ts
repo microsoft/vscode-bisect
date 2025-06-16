@@ -11,7 +11,7 @@ import { resolve } from 'path';
 import { createRequire } from 'module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
-import { BUILD_FOLDER, CONFIG, LOGGER, logTroubleshoot, ROOT, Runtime } from './constants.js';
+import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, ROOT, Runtime } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
 import { exists } from './files.js';
 
@@ -136,18 +136,14 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
             runtime = Runtime.DesktopLocal;
         }
 
-        let quality: 'insider' | 'stable' = 'insider';
-        if (opts.quality) {
-            quality = opts.quality;
+        let quality: Quality = Quality.Insider;
+        if (opts.quality === Quality.Stable) {
+            quality = Quality.Stable;
         }
 
-        let flavor: 'universal' | undefined;
-        if (opts.flavor === 'universal') {
-            flavor = opts.flavor;
-
-            if (flavor && runtime !== Runtime.DesktopLocal) {
-                throw new Error(`Flavor ${chalk.green(flavor)} is only supported for desktop builds.`);
-            }
+        const flavor = flavorFromString(opts.flavor);
+        if (flavor !== Flavor.Default && runtime !== Runtime.DesktopLocal) {
+            throw new Error(`Flavor ${chalk.green(flavor)} is only supported for desktop builds.`);
         }
 
         const buildKind: IBuildKind = { runtime, quality, flavor };

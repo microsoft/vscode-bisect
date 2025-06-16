@@ -8,7 +8,7 @@ import { mkdirSync, promises, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 import { unzipSync } from 'fflate';
-import { BUILD_FOLDER, Platform, platform } from './constants.js';
+import { BUILD_FOLDER, Flavor, Platform, platform, Quality } from './constants.js';
 
 export async function exists(path: string): Promise<boolean> {
     try {
@@ -20,7 +20,7 @@ export async function exists(path: string): Promise<boolean> {
     }
 }
 
-export function getBuildPath(commit: string, quality: 'insider' | 'stable', flavor: 'universal' | undefined): string {
+export function getBuildPath(commit: string, quality: Quality, flavor: Flavor): string {
     let uniqueFolderName: string;
     if (platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
         uniqueFolderName = commit.substring(0, 6); // keep the folder path small for windows max path length restrictions
@@ -29,11 +29,11 @@ export function getBuildPath(commit: string, quality: 'insider' | 'stable', flav
     }
 
     const prefixes: string[] = [];
-    if (quality === 'stable') {
+    if (quality === Quality.Stable) {
         prefixes.push('stable');
     }
 
-    if (flavor) {
+    if (flavor !== Flavor.Default) {
         prefixes.push(flavor);
     }
 

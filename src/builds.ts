@@ -6,14 +6,14 @@
 import chalk from 'chalk';
 import { dirname, join } from 'path';
 import { rmSync } from 'fs';
-import { LOGGER, Platform, platform, Runtime } from './constants.js';
+import { Flavor, LOGGER, Platform, platform, Quality, Runtime } from './constants.js';
 import { fileGet, jsonGet } from './fetch.js';
 import { computeSHA256, exists, getBuildPath, unzip } from './files.js';
 
 export interface IBuildKind {
     readonly runtime: Runtime;
-    readonly quality: 'insider' | 'stable';
-    readonly flavor: 'universal' | undefined;
+    readonly quality: Quality;
+    readonly flavor: Flavor;
 }
 
 export interface IBuild extends IBuildKind {
@@ -125,9 +125,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return flavor === 'universal' ? 'darwin-universal' : 'darwin';
+                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin';
                     case Platform.MacOSArm:
-                        return flavor === 'universal' ? 'darwin-universal' : 'darwin-arm64';
+                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin-arm64';
                     case Platform.LinuxX64:
                         return 'linux-x64';
                     case Platform.LinuxArm:
@@ -214,9 +214,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return flavor === 'universal' ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin.zip';
+                        return flavor === Flavor.Universal ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin.zip';
                     case Platform.MacOSArm:
-                        return flavor === 'universal' ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin-arm64.zip';
+                        return flavor === Flavor.Universal ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin-arm64.zip';
                     case Platform.LinuxX64:
                     case Platform.LinuxArm:
                         return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
@@ -292,9 +292,9 @@ class Builds {
             case Runtime.DesktopLocal:
                 switch (platform) {
                     case Platform.MacOSX64:
-                        return flavor === 'universal' ? 'darwin-universal' : 'darwin';
+                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin';
                     case Platform.MacOSArm:
-                        return flavor === 'universal' ? 'darwin-universal' : 'darwin-arm64';
+                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin-arm64';
                     case Platform.LinuxX64:
                         return 'linux-x64';
                     case Platform.LinuxArm:
