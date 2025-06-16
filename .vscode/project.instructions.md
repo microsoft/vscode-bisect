@@ -92,6 +92,17 @@ VSCode Bisect is a command-line tool that implements binary search (bisecting) f
 
 ## Testing & Quality Assurance
 
+### **Automated Testing**
+- Integration tests using Node.js built-in test runner (`node --test`)
+- Test coverage includes:
+  - Build fetching and installation across all supported platforms and flavors
+  - Cross-platform executable validation
+  - Released and unreleased build filtering
+- Tests validate functionality across multiple runtime configurations:
+  - Desktop Local and Web Local runtimes
+  - Stable and Insider quality builds
+  - Platform-specific flavors (Default, CLI, Universal for macOS)
+
 ### **Manual Testing Approach**
 - Tool is designed for interactive testing by developers
 - Support for both automated (performance) and manual verification
@@ -101,11 +112,17 @@ VSCode Bisect is a command-line tool that implements binary search (bisecting) f
 - Cache invalidation and rebuild capabilities
 - Graceful handling of interrupted bisect sessions
 
+### **Test Execution**
+- Run tests with: `npm test`
+- Tests require network access for VSCode build API integration
+- Cross-platform validation ensures compatibility across Windows, macOS, and Linux
+
 ## Dependencies & Ecosystem
 
 ### **Core Dependencies**
-- Node.js ≥16 required
+- Node.js ≥20 required (updated from ≥16)
 - TypeScript for type safety and modern JS features
+- Node.js built-in test runner for automated testing
 - Platform-specific utilities (unzip, process management)
 - HTTP client with redirect support
 

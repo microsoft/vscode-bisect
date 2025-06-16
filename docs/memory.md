@@ -10,9 +10,10 @@ This document serves as a quick reference for understanding what each important 
   - Package name: `@vscode/vscode-bisect`
   - Requires Node.js ≥16
   - Binary entry point: `bin/vscode-bisect`
-  - Main scripts: `compile`, `build`, `watch`, `prepare`
+  - Main scripts: `compile`, `build`, `watch`, `prepare`, `test`
   - Dependencies include: commander, chalk, prompts, simple-git, @vscode/vscode-perf
   - TypeScript-based project with strict type checking
+  - Uses Node.js built-in test runner for automated testing
 
 ### `tsconfig.json`
 - **Purpose**: TypeScript compiler configuration
@@ -121,6 +122,20 @@ This document serves as a quick reference for understanding what each important 
   - In-memory caching with disk persistence
   - Type-safe getValue/store methods
 
+## Test Files
+
+### `src/tests/integration.test.ts`
+- **Purpose**: Integration tests for core functionality
+- **Key Details**:
+  - Uses Node.js built-in test runner with describe/test functions
+  - Tests build fetching and installation across all supported platforms
+  - Validates executable path resolution and file system operations
+  - Covers multiple runtime configurations (Desktop Local, Web Local)
+  - Tests both Stable and Insider quality builds
+  - Includes platform-specific flavor testing (Default, CLI, Universal for macOS)
+  - Validates both released-only and unreleased build filtering
+  - Requires network access for VSCode build API integration
+
 ## Documentation Files
 
 ### `README.md`
@@ -128,7 +143,7 @@ This document serves as a quick reference for understanding what each important 
 - **Key Details**:
   - Installation instructions via npx
   - Basic usage examples
-  - Requirements (Node.js ≥16)
+  - Requirements (Node.js ≥20)
   - Link to help command
 
 ### `docs/memory.md` (this file)
@@ -144,5 +159,6 @@ This document serves as a quick reference for understanding what each important 
 - **Purpose**: Azure DevOps CI/CD pipeline configuration
 - **Key Details**:
   - Automated build and test processes
+  - Integration test execution as part of CI/CD
   - Publish workflow for NPM package
   - Cross-platform testing matrix
