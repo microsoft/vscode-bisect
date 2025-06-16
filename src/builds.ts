@@ -4,8 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from 'chalk';
-import { spawn } from 'node:child_process';
-import { promisify } from 'node:util';
 import { dirname, join } from 'node:path';
 import { rmSync } from 'node:fs';
 import { Arch, arch, Flavor, LOGGER, Platform, platform, Quality, Runtime } from './constants.js';
@@ -182,11 +180,6 @@ class Builds {
             await unzip(path, destination);
 
             return destination;
-        }
-
-        // Install (unless its not an installer)
-        if (flavor === Flavor.WindowsUserInstaller || flavor === Flavor.WindowsSystemInstaller) {
-            await promisify(spawn)(path, ['/silent'], {});
         }
 
         return path;

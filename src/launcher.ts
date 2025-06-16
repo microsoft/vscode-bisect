@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { mkdirSync, rmSync } from 'node:fs';
+import { promisify } from 'node:util';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { URL } from 'node:url';
@@ -57,8 +58,9 @@ class Launcher {
     async launch(build: IBuild, options?: { forceReDownload: boolean }): Promise<IInstance> {
 
         // Install (unless web remote)
+        let path: string | undefined;
         if (build.runtime !== Runtime.WebRemote) {
-            await builds.installBuild(build, options);
+            path = await builds.installBuild(build, options);
         }
 
         // Launch according to runtime
@@ -86,6 +88,13 @@ class Launcher {
 
             // Desktop
             case Runtime.DesktopLocal:
+                if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
+                    LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
+                    await promisify(spawn)(path, ['/silent'], {});
+
+                    return NOOP_INSTANCE;
+                }
+
                 if (CONFIG.performance) {
                     LOGGER.log(`${chalk.gray('[build]')} starting desktop build ${chalk.green(build.commit)} multiple times and measuring performance...`);
                     return this.runDesktopPerformance(build);
