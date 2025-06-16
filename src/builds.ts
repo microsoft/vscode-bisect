@@ -172,7 +172,7 @@ class Builds {
 
         // Unzip
         let destination: string;
-        if (runtime === Runtime.DesktopLocal && flavor === Flavor.Default && (platform === Platform.WindowsX64 || platform === Platform.WindowsArm)) {
+        if ((runtime === Runtime.DesktopLocal || runtime === Runtime.WebLocal) && flavor === Flavor.Default && (platform === Platform.WindowsX64 || platform === Platform.WindowsArm)) {
             // zip does not contain a single top level folder to use...
             destination = path.substring(0, path.lastIndexOf('.zip'));
         } else {
