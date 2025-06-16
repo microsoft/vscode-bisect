@@ -62,9 +62,9 @@ export const platform = (() => {
 })();
 
 export enum Runtime {
-    WebLocal = 1,
-    WebRemote,
-    DesktopLocal
+    WebLocal = 'web-local',
+    WebRemote = 'web-remote',
+    DesktopLocal = 'desktop-local'
 }
 
 export function runtimeFromString(value: unknown): Runtime {
