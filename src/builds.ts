@@ -105,38 +105,38 @@ class Builds {
     }
 
     private getBuildApiName({ runtime, flavor }: IBuildKind): string {
-        switch (runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                    case Platform.MacOSArm:
-                        return 'server-darwin-web';
-                    case Platform.LinuxX64:
-                        return 'server-linux-x64-web';
-                    case Platform.LinuxArm:
-                        return 'server-linux-arm64-web';
-                    case Platform.WindowsX64:
-                        return 'server-win32-x64-web';
-                    case Platform.WindowsArm:
-                        return 'server-win32-arm64-web';
-                }
 
-            case Runtime.DesktopLocal:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin';
-                    case Platform.MacOSArm:
-                        return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin-arm64';
-                    case Platform.LinuxX64:
-                        return 'linux-x64';
-                    case Platform.LinuxArm:
-                        return 'linux-arm64';
-                    case Platform.WindowsX64:
-                        return 'win32-x64';
-                    case Platform.WindowsArm:
-                        return 'win32-arm64';
-                }
+        // Server
+        if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                case Platform.MacOSArm:
+                    return 'server-darwin-web';
+                case Platform.LinuxX64:
+                    return 'server-linux-x64-web';
+                case Platform.LinuxArm:
+                    return 'server-linux-arm64-web';
+                case Platform.WindowsX64:
+                    return 'server-win32-x64-web';
+                case Platform.WindowsArm:
+                    return 'server-win32-arm64-web';
+            }
+        }
+
+        // Desktop / CLI
+        switch (platform) {
+            case Platform.MacOSX64:
+                return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin';
+            case Platform.MacOSArm:
+                return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin-arm64';
+            case Platform.LinuxX64:
+                return 'linux-x64';
+            case Platform.LinuxArm:
+                return 'linux-arm64';
+            case Platform.WindowsX64:
+                return 'win32-x64';
+            case Platform.WindowsArm:
+                return 'win32-arm64';
         }
     }
 
@@ -186,107 +186,103 @@ class Builds {
     }
 
     private async getBuildArchiveName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
-        switch (runtime) {
 
-            // We currently do not have ARM enabled servers
-            // so we fallback to x64 until we ship ARM.
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                        return 'vscode-server-darwin-x64-web.zip';
-                    case Platform.MacOSArm:
-                        return 'vscode-server-darwin-arm64-web.zip';
-                    case Platform.LinuxX64:
-                        return 'vscode-server-linux-x64-web.tar.gz';
-                    case Platform.LinuxArm:
-                        return 'vscode-server-linux-arm64-web.tar.gz';
-                    case Platform.WindowsX64:
-                        return 'vscode-server-win32-x64-web.zip';
-                    case Platform.WindowsArm:
-                        return 'vscode-server-win32-arm64-web.zip';
+        // Server
+        if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                    return 'vscode-server-darwin-x64-web.zip';
+                case Platform.MacOSArm:
+                    return 'vscode-server-darwin-arm64-web.zip';
+                case Platform.LinuxX64:
+                    return 'vscode-server-linux-x64-web.tar.gz';
+                case Platform.LinuxArm:
+                    return 'vscode-server-linux-arm64-web.tar.gz';
+                case Platform.WindowsX64:
+                    return 'vscode-server-win32-x64-web.zip';
+                case Platform.WindowsArm:
+                    return 'vscode-server-win32-arm64-web.zip';
+            }
+        }
+
+        // Desktop
+        if (flavor !== Flavor.Cli) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                    return flavor === Flavor.Universal ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin.zip';
+                case Platform.MacOSArm:
+                    return flavor === Flavor.Universal ? 'VSCode-darwin-universal.zip' : 'VSCode-darwin-arm64.zip';
+                case Platform.LinuxX64:
+                case Platform.LinuxArm:
+                    return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
+                case Platform.WindowsX64:
+                case Platform.WindowsArm: {
+                    const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
+
+                    return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}.zip` : `VSCode-win32-arm64-${buildMeta.productVersion}.zip`;
                 }
+            }
+        }
 
-            // Every platform has its own name scheme, hilarious right?
-            // - macOS: just the name, nice! (e.g. VSCode-darwin.zip)
-            // - Linux: includes some unix timestamp (e.g. code-insider-x64-1639979337.tar.gz)
-            // - Windows: includes the version (e.g. VSCode-win32-x64-1.64.0-insider.zip)
-            case Runtime.DesktopLocal:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                        switch (flavor) {
-                            case Flavor.Default:
-                                return 'VSCode-darwin.zip';
-                            case Flavor.Universal:
-                                return 'VSCode-darwin-universal.zip';
-                            case Flavor.Cli:
-                                return 'vscode_cli_darwin_x64_cli.zip';
-                        }
-                    case Platform.MacOSArm:
-                        switch (flavor) {
-                            case Flavor.Default:
-                                return 'VSCode-darwin-arm64.zip';
-                            case Flavor.Universal:
-                                return 'VSCode-darwin-universal.zip';
-                            case Flavor.Cli:
-                                return 'vscode_cli_darwin_arm64_cli.zip';
-                        }
-                    case Platform.LinuxX64:
-                    case Platform.LinuxArm:
-                        return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
-                    case Platform.WindowsX64:
-                    case Platform.WindowsArm: {
-                        const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
+        // CLI
+        switch (platform) {
+            case Platform.MacOSX64:
+                return 'vscode_cli_darwin_x64_cli.zip';
+            case Platform.MacOSArm:
+                return 'vscode_cli_darwin_arm64_cli.zip';
+            case Platform.LinuxX64:
+            case Platform.LinuxArm:
+                return (await this.fetchBuildMeta({ runtime, commit, quality, flavor })).url.split('/').pop()!; // e.g. https://az764295.vo.msecnd.net/insider/807bf598bea406dcb272a9fced54697986e87768/code-insider-x64-1639979337.tar.gz
+            case Platform.WindowsX64:
+            case Platform.WindowsArm: {
+                const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
 
-                        return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}.zip` : `VSCode-win32-arm64-${buildMeta.productVersion}.zip`;
-                    }
-                }
+                return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}.zip` : `VSCode-win32-arm64-${buildMeta.productVersion}.zip`;
+            }
         }
     }
 
     async getBuildName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
-        switch (runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                        return 'vscode-server-darwin-x64-web';
-                    case Platform.MacOSArm:
-                        return 'vscode-server-darwin-arm64-web';
-                    case Platform.LinuxX64:
-                        return 'vscode-server-linux-x64-web';
-                    case Platform.LinuxArm:
-                        return 'vscode-server-linux-arm64-web';
-                    case Platform.WindowsX64:
-                        return 'vscode-server-win32-x64-web';
-                    case Platform.WindowsArm:
-                        return 'vscode-server-win32-arm64-web';
-                }
 
-            // Here, only Windows does not play by our rules and adds the version number
-            // - Windows: includes the version (e.g. VSCode-win32-x64-1.64.0-insider)
-            case Runtime.DesktopLocal:
-                switch (flavor) {
-                    case Flavor.Cli:
-                        return quality === 'insider' ? 'code-insiders' : 'code';
-                    default:
-                        switch (platform) {
-                            case Platform.MacOSX64:
-                            case Platform.MacOSArm:
-                                return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
-                            case Platform.LinuxX64:
-                                return 'VSCode-linux-x64';
-                            case Platform.LinuxArm:
-                                return 'VSCode-linux-arm64';
-                            case Platform.WindowsX64:
-                            case Platform.WindowsArm: {
-                                const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
-
-                                return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}` : `VSCode-win32-arm64-${buildMeta.productVersion}`;
-                            }
-                        }
-                }
+        // Server
+        if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                    return 'vscode-server-darwin-x64-web';
+                case Platform.MacOSArm:
+                    return 'vscode-server-darwin-arm64-web';
+                case Platform.LinuxX64:
+                    return 'vscode-server-linux-x64-web';
+                case Platform.LinuxArm:
+                    return 'vscode-server-linux-arm64-web';
+                case Platform.WindowsX64:
+                    return 'vscode-server-win32-x64-web';
+                case Platform.WindowsArm:
+                    return 'vscode-server-win32-arm64-web';
+            }
         }
+
+        // Desktop
+        if (flavor !== Flavor.Cli) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                case Platform.MacOSArm:
+                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
+                case Platform.LinuxX64:
+                    return 'VSCode-linux-x64';
+                case Platform.LinuxArm:
+                    return 'VSCode-linux-arm64';
+                case Platform.WindowsX64:
+                case Platform.WindowsArm: {
+                    const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
+
+                    return platform === Platform.WindowsX64 ? `VSCode-win32-x64-${buildMeta.productVersion}` : `VSCode-win32-arm64-${buildMeta.productVersion}`;
+                }
+            }
+        }
+
+        // CLI
+        return quality === 'insider' ? 'code-insiders' : 'code';
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -294,83 +290,59 @@ class Builds {
     }
 
     private getPlatformName({ runtime, flavor }: IBuildKind): string {
-        switch (runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                        return 'server-darwin-web';
-                    case Platform.MacOSArm:
-                        return 'server-darwin-arm64-web';
-                    case Platform.LinuxX64:
-                        return 'server-linux-x64-web';
-                    case Platform.LinuxArm:
-                        return 'server-linux-arm64-web';
-                    case Platform.WindowsX64:
-                        return 'server-win32-x64-web';
-                    case Platform.WindowsArm:
-                        return 'server-win32-arm64-web';
-                }
 
-            case Runtime.DesktopLocal:
-                switch (platform) {
-                    case Platform.MacOSX64: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                                return 'darwin';
-                            case Flavor.Universal:
-                                return 'darwin-universal';
-                            case Flavor.Cli:
-                                return 'cli-darwin-x64';
-                        }
-                    }
-                    case Platform.MacOSArm: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                                return 'darwin-arm64';
-                            case Flavor.Universal:
-                                return 'darwin-universal';
-                            case Flavor.Cli:
-                                return 'cli-darwin-arm64';
-                        }
-                    }
-                    case Platform.LinuxX64: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                            case Flavor.Universal:
-                                return 'linux-x64';
-                            case Flavor.Cli:
-                                return 'cli-linux-x64';
-                        }
-                    }
-                    case Platform.LinuxArm: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                            case Flavor.Universal:
-                                return 'linux-arm64';
-                            case Flavor.Cli:
-                                return 'cli-linux-arm64';
-                        }
-                    }
-                    case Platform.WindowsX64: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                            case Flavor.Universal:
-                                return 'win32-x64-archive';
-                            case Flavor.Cli:
-                                return 'cli-win32-x64';
-                        }
-                    }
-                    case Platform.WindowsArm: {
-                        switch (flavor) {
-                            case Flavor.Default:
-                            case Flavor.Universal:
-                                return 'win32-arm64-archive';
-                            case Flavor.Cli:
-                                return 'cli-win32-arm64';
-                        }
-                    }
+        // Server
+        if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                    return 'server-darwin-web';
+                case Platform.MacOSArm:
+                    return 'server-darwin-arm64-web';
+                case Platform.LinuxX64:
+                    return 'server-linux-x64-web';
+                case Platform.LinuxArm:
+                    return 'server-linux-arm64-web';
+                case Platform.WindowsX64:
+                    return 'server-win32-x64-web';
+                case Platform.WindowsArm:
+                    return 'server-win32-arm64-web';
+            }
+        }
+
+        // Desktop
+        if (flavor !== Flavor.Cli) {
+            switch (platform) {
+                case Platform.MacOSX64: {
+                    return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin';
                 }
+                case Platform.MacOSArm: {
+                    return flavor === Flavor.Universal ? 'darwin-universal' : 'darwin-arm64';
+                }
+                case Platform.LinuxX64:
+                    return 'linux-x64';
+                case Platform.LinuxArm:
+                    return 'linux-arm64';
+                case Platform.WindowsX64:
+                    return 'win32-x64-archive';
+                case Platform.WindowsArm:
+                    return 'win32-arm64-archive';
+            }
+        }
+
+        // CLI
+        switch (platform) {
+            case Platform.MacOSX64:
+                return 'cli-darwin-x64';
+            case Platform.MacOSArm:
+                return 'cli-darwin-arm64';
+            case Platform.LinuxX64:
+                return 'cli-linux-x64';
+            case Platform.LinuxArm:
+                return 'cli-linux-arm64';
+            case Platform.WindowsX64:
+                return 'cli-win32-x64';
+            case Platform.WindowsArm:
+                return 'cli-win32-arm64';
         }
     }
 
@@ -378,50 +350,49 @@ class Builds {
         const buildPath = getBuildPath(commit, quality, flavor);
         const buildName = await builds.getBuildName({ runtime, commit, quality, flavor });
 
-        switch (runtime) {
-            case Runtime.WebLocal:
-            case Runtime.WebRemote:
-                switch (platform) {
-                    case Platform.MacOSX64:
-                    case Platform.MacOSArm:
-                    case Platform.LinuxX64:
-                    case Platform.LinuxArm: {
-                        const oldLocation = join(buildPath, buildName, 'server.sh');
-                        if (await exists(oldLocation)) {
-                            return oldLocation; // only valid until 1.64.x
-                        }
-
-                        return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+        // Server
+        if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                case Platform.MacOSArm:
+                case Platform.LinuxX64:
+                case Platform.LinuxArm: {
+                    const oldLocation = join(buildPath, buildName, 'server.sh');
+                    if (await exists(oldLocation)) {
+                        return oldLocation; // only valid until 1.64.x
                     }
-                    case Platform.WindowsX64:
-                    case Platform.WindowsArm: {
-                        const oldLocation = join(buildPath, buildName, 'server.cmd');
-                        if (await exists(oldLocation)) {
-                            return oldLocation; // only valid until 1.64.x
-                        }
 
-                        return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+                }
+                case Platform.WindowsX64:
+                case Platform.WindowsArm: {
+                    const oldLocation = join(buildPath, buildName, 'server.cmd');
+                    if (await exists(oldLocation)) {
+                        return oldLocation; // only valid until 1.64.x
                     }
-                }
 
-            case Runtime.DesktopLocal:
-                switch (flavor) {
-                    case Flavor.Cli:
-                        return join(buildPath, buildName);
-                    default:
-                        switch (platform) {
-                            case Platform.MacOSX64:
-                            case Platform.MacOSArm:
-                                return join(buildPath, buildName, 'Contents', 'Resources', 'app', 'bin', 'code')
-                            case Platform.LinuxX64:
-                            case Platform.LinuxArm:
-                                return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders' : 'code')
-                            case Platform.WindowsX64:
-                            case Platform.WindowsArm:
-                                return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders.cmd' : 'code.cmd')
-                        }
+                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
                 }
+            }
         }
+
+        // Desktop
+        if (flavor !== Flavor.Cli) {
+            switch (platform) {
+                case Platform.MacOSX64:
+                case Platform.MacOSArm:
+                    return join(buildPath, buildName, 'Contents', 'Resources', 'app', 'bin', 'code')
+                case Platform.LinuxX64:
+                case Platform.LinuxArm:
+                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders' : 'code')
+                case Platform.WindowsX64:
+                case Platform.WindowsArm:
+                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders.cmd' : 'code.cmd')
+            }
+        }
+
+        // CLI
+        return join(buildPath, buildName);
     }
 }
 
