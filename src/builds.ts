@@ -181,7 +181,7 @@ class Builds {
             // zip contains a single top level folder to use
             destination = dirname(path);
         }
-        console.log(`${chalk.gray('[build]')} unzipping build to ${chalk.green(destination)}...`);
+        console.log(`${chalk.gray('[build]')} unzipping ${chalk.green(path)} to ${chalk.green(destination)}...`);
         await unzip(path, destination);
     }
 
