@@ -11,7 +11,7 @@ import { resolve } from 'path';
 import { createRequire } from 'module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
-import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, ROOT, Runtime } from './constants.js';
+import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
 import { exists } from './files.js';
 
@@ -136,10 +136,7 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
             runtime = Runtime.DesktopLocal;
         }
 
-        let quality: Quality = Quality.Insider;
-        if (opts.quality === Quality.Stable) {
-            quality = Quality.Stable;
-        }
+        const quality = qualityFromString(opts.quality);
 
         const flavor = flavorFromString(opts.flavor);
         if (flavor !== Flavor.Default && runtime !== Runtime.DesktopLocal) {

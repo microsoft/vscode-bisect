@@ -72,6 +72,15 @@ export enum Quality {
     Stable = 'stable'
 }
 
+export function qualityFromString(value: unknown): Quality {
+    switch (value) {
+        case 'stable':
+            return Quality.Stable;
+        default:
+            return Quality.Insider;
+    }
+}
+
 export enum Flavor {
     Default = 'default',
     Universal = 'universal',
