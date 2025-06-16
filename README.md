@@ -7,7 +7,7 @@ Provides additional options to test a specific build by commit hash supporting s
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/en/) at least `16.x.x`
+- [Node.js](https://nodejs.org/en/) at least `20.x.x`
 
 ## Usage
 
