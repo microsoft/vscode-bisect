@@ -113,7 +113,7 @@ class Launcher {
         let installCommand: string;
         switch (flavor) {
             case Flavor.LinuxDeb:
-                installCommand = `sudo dpkg -i ${path}`;
+                installCommand = `sudo apt install ${path}`;
                 break;
             case Flavor.LinuxRPM:
                 installCommand = `sudo rpm -i ${path}`;
