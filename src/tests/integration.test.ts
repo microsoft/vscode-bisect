@@ -48,6 +48,7 @@ describe('Integration tests', () => {
             assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
             const path = await builds.downloadAndExtractBuild(build, { forceReDownload: true });
+            assert.ok(path);
             assert.ok(fs.existsSync(path), `Expected path to exist for build ${buildKindToString(kind)}`);
 
             if (kind.flavor === Flavor.Default || kind.flavor === Flavor.Cli || kind.flavor === Flavor.DarwinUniversal) {

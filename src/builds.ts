@@ -6,7 +6,7 @@
 import chalk from 'chalk';
 import { dirname, join } from 'node:path';
 import { rmSync } from 'node:fs';
-import { Arch, arch, Flavor, LOGGER, Platform, platform, Quality, Runtime } from './constants.js';
+import { Arch, arch, Flavor, isDockerCliFlavor, LOGGER, Platform, platform, Quality, Runtime } from './constants.js';
 import { fileGet, jsonGet } from './fetch.js';
 import { computeSHA256, exists, getBuildPath, unzip } from './files.js';
 
@@ -136,7 +136,11 @@ class Builds {
         }
     }
 
-    async downloadAndExtractBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string> {
+    async downloadAndExtractBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string | undefined> {
+        if (isDockerCliFlavor(flavor)) {
+            return undefined; // CLIs running in docker are handled differently
+        }
+
         const buildName = await this.getBuildDownloadName({ runtime, commit, quality, flavor });
 
         const path = join(getBuildPath(commit, quality, flavor), buildName);

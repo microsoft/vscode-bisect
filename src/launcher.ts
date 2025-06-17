@@ -15,7 +15,7 @@ import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality, isDockerCliFlavor } from './constants.js';
 import { exists } from './files.js';
 
 export interface IInstance {
@@ -97,6 +97,11 @@ class Launcher {
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
                     return this.runWindowsDesktopInstaller(path);
+                }
+
+                if (isDockerCliFlavor(build.flavor)) {
+                    LOGGER.log(`${chalk.gray('[build]')} starting Docker CLI build ${chalk.green(build.commit)} with flavor ${chalk.green(build.flavor)}...`);
+                    return this.launchDockerCLI(build, build.flavor);
                 }
 
                 if (CONFIG.performance) {
@@ -310,6 +315,90 @@ class Launcher {
             if (build.flavor !== Flavor.Cli) {
                 return resolve({ stop });
             }
+        });
+    }
+
+    private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
+        const commit = build.commit;
+        const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
+
+        await this.setupDockerBinfmt();
+
+        let dockerCommand: string;
+
+        switch (flavor) {
+            case Flavor.CliLinuxAmd64:
+                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliLinuxArm64:
+                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliLinuxArmv7:
+                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliAlpineAmd64:
+                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliAlpineArm64:
+                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+        }
+
+        LOGGER.log(`${chalk.gray('[docker]')} running command: ${chalk.green(dockerCommand)}`);
+
+        const cp = spawn('sh', ['-c', dockerCommand], {
+            stdio: 'inherit',
+            env: { ...process.env, COMMIT: commit }
+        });
+
+        return new Promise<IInstance>((resolve) => {
+            cp.on('spawn', () => {
+                resolve({
+                    async stop() {
+                        cp.kill();
+                    }
+                });
+            });
+
+            cp.on('error', (error) => {
+                LOGGER.log(`${chalk.red('[docker]')} error: ${error.message}`);
+                resolve({
+                    async stop() {
+                        cp.kill();
+                    }
+                });
+            });
+        });
+    }
+
+    private async setupDockerBinfmt(): Promise<void> {
+        LOGGER.log(`${chalk.gray('[docker]')} setting up multi-architecture support...`);
+
+        // Uninstall existing binfmt handlers
+        const uninstallCommand = 'docker run --privileged --rm tonistiigi/binfmt --uninstall \'*\'';
+        await this.runDockerCommand(uninstallCommand);
+
+        // Install all architecture handlers
+        const installCommand = 'docker run --pull always --privileged --rm tonistiigi/binfmt --install all';
+        await this.runDockerCommand(installCommand);
+    }
+
+    private async runDockerCommand(command: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            LOGGER.trace(`${chalk.gray('[docker]')} running: ${command}`);
+            const cp = spawn('sh', ['-c', command]);
+
+            cp.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`Docker command failed with exit code ${code}`));
+                }
+            });
+
+            cp.on('error', (error) => {
+                reject(error);
+            });
         });
     }
 

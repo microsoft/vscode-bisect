@@ -11,7 +11,7 @@ import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { bisecter } from './bisect.js';
 import { git } from './git.js';
-import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime, runtimeFromString } from './constants.js';
+import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, isDockerCliFlavor, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime, runtimeFromString } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
 import { exists } from './files.js';
 import { sanity } from './sanity.js';
@@ -43,7 +43,7 @@ export default async function main(argv: string[]): Promise<void> {
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .addOption(new Option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable']))
-        .addOption(new Option('-f, --flavor <universal|cli|win32-user|win32-system|linux-deb|linux-rpm|linux-snap>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system', 'linux-deb', 'linux-rpm', 'linux-snap']))
+        .addOption(new Option('-f, --flavor <flavor>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system', 'linux-deb', 'linux-rpm', 'linux-snap', 'cli-linux-amd64', 'cli-linux-arm64', 'cli-linux-armv7', 'cli-alpine-amd64', 'cli-alpine-arm64']))
         .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
         .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')

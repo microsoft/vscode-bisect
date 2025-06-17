@@ -125,7 +125,12 @@ export enum Flavor {
     LinuxDeb = 'linux-deb',
     LinuxRPM = 'linux-rpm',
     LinuxSnap = 'linux-snap',
-    Cli = 'cli'
+    Cli = 'cli',
+    CliLinuxAmd64 = 'cli-linux-amd64',
+    CliLinuxArm64 = 'cli-linux-arm64',
+    CliLinuxArmv7 = 'cli-linux-armv7',
+    CliAlpineAmd64 = 'cli-alpine-amd64',
+    CliAlpineArm64 = 'cli-alpine-arm64'
 }
 
 export function flavorFromString(value: unknown): Flavor {
@@ -144,6 +149,16 @@ export function flavorFromString(value: unknown): Flavor {
             return Flavor.LinuxSnap;
         case 'cli':
             return Flavor.Cli;
+        case 'cli-linux-amd64':
+            return Flavor.CliLinuxAmd64;
+        case 'cli-linux-arm64':
+            return Flavor.CliLinuxArm64;
+        case 'cli-linux-armv7':
+            return Flavor.CliLinuxArmv7;
+        case 'cli-alpine-amd64':
+            return Flavor.CliAlpineAmd64;
+        case 'cli-alpine-arm64':
+            return Flavor.CliAlpineArm64;
         default: {
             if (typeof value === 'string') {
                 throw new Error(`Unknown flavor: ${value}`);
@@ -151,6 +166,14 @@ export function flavorFromString(value: unknown): Flavor {
             return Flavor.Default;
         }
     }
+}
+
+export function isDockerCliFlavor(flavor: Flavor): flavor is Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64 {
+    return flavor === Flavor.CliLinuxAmd64 ||
+        flavor === Flavor.CliLinuxArm64 ||
+        flavor === Flavor.CliLinuxArmv7 ||
+        flavor === Flavor.CliAlpineAmd64 ||
+        flavor === Flavor.CliAlpineArm64;
 }
 
 export const LOGGER = {
