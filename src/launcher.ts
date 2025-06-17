@@ -126,13 +126,10 @@ class Launcher {
         clipboard.writeSync(installCommand);
 
         const { installed } = await prompts({
-            type: 'toggle',
+            type: 'confirm',
             name: 'installed',
-            message: `Please open a new terminal, paste from clipboard and run to install.`,
-            choices: [
-                { title: 'Done', value: 'done' },
-                { title: 'Cancel', value: 'cancel' }
-            ]
+            message: `Please open a new terminal, paste from clipboard and run to install. Continue when done.`,
+            initial: true
         });
 
         if (!installed) {
