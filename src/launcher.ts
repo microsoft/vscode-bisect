@@ -15,7 +15,7 @@ import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality } from './constants.js';
 import { exists } from './files.js';
 
 export interface IInstance {
@@ -90,26 +90,8 @@ class Launcher {
             // Desktop
             case Runtime.DesktopLocal:
                 if (path && (build.flavor === Flavor.LinuxDeb || build.flavor === Flavor.LinuxRPM || build.flavor === Flavor.LinuxSnap)) {
-                    let prompt: string;
-                    switch (build.flavor) {
-                        case Flavor.LinuxDeb:
-                            prompt = `Please run ${chalk.green(`sudo dpkg -i ${path}`)} to install and test the build.`;
-                            break;
-                        case Flavor.LinuxRPM:
-                            prompt = `Please run ${chalk.green(`sudo dpkg -i ${path}`)} to install and test the build.`;
-                            break;
-                        case Flavor.LinuxSnap:
-                            prompt = `Please run ${chalk.green(`sudo snap install ${path} --dangerous`)} to install and test the build.`;
-                            break;
-                    }
-
-                    await prompts({
-                        type: 'confirm',
-                        name: 'install',
-                        message: prompt
-                    });
-
-                    return NOOP_INSTANCE;
+                    LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
+                    return this.runLinuxDesktopInstaller(build.quality, build.flavor, path);
                 }
 
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
@@ -124,6 +106,45 @@ class Launcher {
 
                 LOGGER.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
                 return this.launchElectronOrCLI(build);
+        }
+    }
+
+    private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance> {
+        let installCommand: string;
+        switch (flavor) {
+            case Flavor.LinuxDeb:
+                installCommand = `sudo dpkg -i ${path}`;
+                break;
+            case Flavor.LinuxRPM:
+                installCommand = `sudo rpm -i ${path}`;
+                break;
+            case Flavor.LinuxSnap:
+                installCommand = `sudo snap install ${path} --dangerous`;
+                break;
+        }
+
+        clipboard.writeSync(installCommand);
+
+        const { installed } = await prompts({
+            type: 'toggle',
+            name: 'installed',
+            message: `Please open a new terminal, paste from clipboard and run to install.`,
+            choices: [
+                { title: 'Done', value: 'done' },
+                { title: 'Cancel', value: 'cancel' }
+            ]
+        });
+
+        if (!installed) {
+            return NOOP_INSTANCE;
+        }
+
+        const cp = spawn(quality === 'stable' ? 'code' : 'code-insiders', [], { shell: true });
+
+        return {
+            async stop() {
+                cp.kill();
+            }
         }
     }
 
