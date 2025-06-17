@@ -15,7 +15,7 @@ import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality, isDockerCliFlavor } from './constants.js';
 import { exists } from './files.js';
 
 export interface IInstance {
@@ -97,6 +97,11 @@ class Launcher {
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
                     return this.runWindowsDesktopInstaller(path);
+                }
+
+                if (isDockerCliFlavor(build.flavor)) {
+                    LOGGER.log(`${chalk.gray('[build]')} starting Docker CLI build ${chalk.green(build.commit)} with flavor ${chalk.green(build.flavor)}...`);
+                    return this.launchDockerCLI(build, build.flavor);
                 }
 
                 if (CONFIG.performance) {
@@ -271,34 +276,9 @@ class Launcher {
                 LOGGER.trace(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
 
                 if (build.flavor === Flavor.Cli) {
-                    const output: string = data.toString().trim();
-                    if (output.includes('github.com/login/device')) {
-                        const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
-                        if (codeMatch) {
-                            const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
-                            clipboard.writeSync(code);
-                            open(`https://github.com/login/device`);
-                        }
-                    } else if (output.includes('microsoft.com/devicelogin')) {
-                        const codeMatch = output.match(/code ([A-Z0-9]{9})/);
-                        if (codeMatch) {
-                            const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
-                            clipboard.writeSync(code);
-                            open(`https://microsoft.com/devicelogin`);
-                        }
-                    } else if (output.includes('Open this link in your browser')) {
-                        const url = output.substring('Open this link in your browser '.length);
-                        try {
-                            const href = new URL(url).href;
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
-                            open(`${href}?vscode-version=${build.commit}`);
-
-                            return resolve({ stop });
-                        } catch (error) {
-                            LOGGER.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
-                        }
+                    const done = this.onServerOutput(build, data);
+                    if (done) {
+                        return resolve({ stop });
                     }
                 }
             });
@@ -310,6 +290,117 @@ class Launcher {
             if (build.flavor !== Flavor.Cli) {
                 return resolve({ stop });
             }
+        });
+    }
+
+    private onServerOutput(build: IBuild, data: Buffer): boolean {
+        const output: string = data.toString().trim();
+        if (output.includes('github.com/login/device')) {
+            const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
+            if (codeMatch) {
+                const code = codeMatch[1];
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
+                clipboard.writeSync(code);
+                open(`https://github.com/login/device`);
+            }
+        } else if (output.includes('microsoft.com/devicelogin')) {
+            const codeMatch = output.match(/code ([A-Z0-9]{9})/);
+            if (codeMatch) {
+                const code = codeMatch[1];
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
+                clipboard.writeSync(code);
+                open(`https://microsoft.com/devicelogin`);
+            }
+        } else if (output.includes('Open this link in your browser')) {
+            const url = output.substring('Open this link in your browser '.length);
+            try {
+                const href = new URL(url).href;
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
+                open(`${href}?vscode-version=${build.commit}`);
+
+                return true; // DONE
+            } catch (error) {
+                LOGGER.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
+            }
+        }
+
+        return false; // NOT YET DONE
+    }
+
+    private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
+        const commit = build.commit;
+        const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
+
+        await this.setupDockerBinfmt();
+
+        let dockerCommand: string;
+
+        switch (flavor) {
+            case Flavor.CliLinuxAmd64:
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliLinuxArm64:
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliLinuxArmv7:
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliAlpineAmd64:
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+            case Flavor.CliAlpineArm64:
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                break;
+        }
+
+        LOGGER.log(`${chalk.gray('[docker]')} running command: ${chalk.green(dockerCommand)}`);
+
+        const cp = spawn('sh', ['-c', dockerCommand], {
+            stdio: 'pipe',
+            env: { ...process.env, COMMIT: commit }
+        });
+
+        cp.stderr.pipe(process.stderr);
+        cp.stdout.pipe(process.stdout);
+
+        return new Promise<IInstance>(resolve => {
+            cp.stdout.on('data', data => {
+                const done = this.onServerOutput(build, data);
+                if (done) {
+                    return resolve({ stop: async () => cp.kill() });
+                }
+            });
+        });
+    }
+
+    private async setupDockerBinfmt(): Promise<void> {
+        LOGGER.log(`${chalk.gray('[docker]')} setting up multi-architecture support...`);
+
+        // Uninstall existing binfmt handlers
+        const uninstallCommand = 'docker run --privileged --rm tonistiigi/binfmt --uninstall \'*\'';
+        await this.runDockerCommand(uninstallCommand);
+
+        // Install all architecture handlers
+        const installCommand = 'docker run --pull always --privileged --rm tonistiigi/binfmt --install all';
+        await this.runDockerCommand(installCommand);
+    }
+
+    private async runDockerCommand(command: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            LOGGER.trace(`${chalk.gray('[docker]')} running: ${command}`);
+            const cp = spawn('sh', ['-c', command]);
+
+            cp.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`Docker command failed with exit code ${code}`));
+                }
+            });
+
+            cp.on('error', (error) => {
+                reject(error);
+            });
         });
     }
 
