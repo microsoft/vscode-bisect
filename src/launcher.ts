@@ -351,24 +351,11 @@ class Launcher {
             env: { ...process.env, COMMIT: commit }
         });
 
-        return new Promise<IInstance>((resolve) => {
-            cp.on('spawn', () => {
-                resolve({
-                    async stop() {
-                        cp.kill();
-                    }
-                });
-            });
-
-            cp.on('error', (error) => {
-                LOGGER.log(`${chalk.red('[docker]')} error: ${error.message}`);
-                resolve({
-                    async stop() {
-                        cp.kill();
-                    }
-                });
-            });
-        });
+        return {
+            async stop() {
+                cp.kill();
+            }
+        }
     }
 
     private async setupDockerBinfmt(): Promise<void> {
