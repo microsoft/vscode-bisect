@@ -125,14 +125,19 @@ class Launcher {
 
         clipboard.writeSync(installCommand);
 
-        const { installed } = await prompts({
-            type: 'confirm',
-            name: 'installed',
-            message: `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Continue when done.`,
-            initial: true
-        });
+        const { status } = await prompts([
+            {
+                type: 'select',
+                name: 'status',
+                message: `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.`,
+                choices: [
+                    { title: 'Done', value: 'done' },
+                    { title: 'Skip', value: 'skip' },
+                ]
+            }
+        ]);
 
-        if (!installed) {
+        if (status === 'skip') {
             return NOOP_INSTANCE;
         }
 
