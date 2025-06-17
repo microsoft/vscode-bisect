@@ -43,7 +43,7 @@ export default async function main(argv: string[]): Promise<void> {
         .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
         .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
         .addOption(new Option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable']))
-        .addOption(new Option('-f, --flavor <universal|cli|win32-user|win32-system>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system']))
+        .addOption(new Option('-f, --flavor <universal|cli|win32-user|win32-system|linux-deb|linux-rpm|linux-snap>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system', 'linux-deb', 'linux-rpm', 'linux-snap']))
         .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
         .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
         .option('--releasedOnly', 'only bisect over released builds to support older builds')
