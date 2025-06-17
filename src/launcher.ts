@@ -229,7 +229,7 @@ class Launcher {
                         const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
                         if (codeMatch) {
                             const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Open ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)} to log in`);
+                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
                             clipboard.writeSync(code);
                             open(`https://github.com/login/device`);
                         }
@@ -237,7 +237,7 @@ class Launcher {
                         const codeMatch = output.match(/code ([A-Z0-9]{9})/);
                         if (codeMatch) {
                             const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Open ${chalk.underline('https://microsoft.com/devicelogin')} and use code ${chalk.green(code)} to log in`);
+                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
                             clipboard.writeSync(code);
                             open(`https://microsoft.com/devicelogin`);
                         }
