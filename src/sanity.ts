@@ -36,19 +36,6 @@ class Sanity {
 
         this.logWelcome();
 
-        const result = await prompts([
-            {
-                type: 'confirm',
-                name: 'status',
-                message: `Are you ready to begin testing ${chalk.green(commit)}?`,
-                initial: true
-            }
-        ]);
-
-        if (!result.status) {
-            return;
-        }
-
         for (let i = 0; i < buildKinds.length; i++) {
             const build = buildKinds[i];
 
@@ -64,6 +51,8 @@ class Sanity {
     }
 
     private logWelcome(): void {
+        console.clear();
+
         const banner = `
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
