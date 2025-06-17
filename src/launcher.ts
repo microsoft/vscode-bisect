@@ -6,15 +6,16 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import clipboard from 'clipboardy';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { URL } from 'node:url';
 import { URI } from 'vscode-uri';
 import open from 'open';
+import prompts from 'prompts';
 import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality } from './constants.js';
 import { exists } from './files.js';
 
 export interface IInstance {
@@ -60,7 +61,7 @@ class Launcher {
         // Install (unless web remote)
         let path: string | undefined;
         if (build.runtime !== Runtime.WebRemote) {
-            path = await builds.installBuild(build, options);
+            path = await builds.downloadAndExtractBuild(build, options);
         }
 
         // Launch according to runtime
@@ -88,6 +89,11 @@ class Launcher {
 
             // Desktop
             case Runtime.DesktopLocal:
+                if (path && (build.flavor === Flavor.LinuxDeb || build.flavor === Flavor.LinuxRPM || build.flavor === Flavor.LinuxSnap)) {
+                    LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
+                    return this.runLinuxDesktopInstaller(build.quality, build.flavor, path);
+                }
+
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
                     return this.runWindowsDesktopInstaller(path);
@@ -100,6 +106,47 @@ class Launcher {
 
                 LOGGER.log(`${chalk.gray('[build]')} starting ${build.flavor === Flavor.Cli ? 'CLI' : 'desktop'} build ${chalk.green(build.commit)}...`);
                 return this.launchElectronOrCLI(build);
+        }
+    }
+
+    private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance> {
+        let installCommand: string;
+        switch (flavor) {
+            case Flavor.LinuxDeb:
+                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
+                break;
+            case Flavor.LinuxRPM:
+                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
+                break;
+            case Flavor.LinuxSnap:
+                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
+                break;
+        }
+
+        clipboard.writeSync(installCommand);
+
+        const { status } = await prompts([
+            {
+                type: 'select',
+                name: 'status',
+                message: `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.`,
+                choices: [
+                    { title: 'Done', value: 'done' },
+                    { title: 'Skip', value: 'skip' },
+                ]
+            }
+        ]);
+
+        if (status === 'skip') {
+            return NOOP_INSTANCE;
+        }
+
+        const cp = spawn(quality === 'stable' ? 'code' : 'code-insiders', [], { shell: true });
+
+        return {
+            async stop() {
+                cp.kill();
+            }
         }
     }
 
@@ -286,7 +333,7 @@ class Launcher {
             );
         }
 
-         return spawn(executable, args);
+        return spawn(executable, args);
     }
 
     private async getExecutablePath(build: IBuild): Promise<string> {

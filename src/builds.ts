@@ -136,7 +136,7 @@ class Builds {
         }
     }
 
-    async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string> {
+    async downloadAndExtractBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string> {
         const buildName = await this.getBuildDownloadName({ runtime, commit, quality, flavor });
 
         const path = join(getBuildPath(commit, quality, flavor), buildName);
@@ -314,7 +314,16 @@ class Builds {
                     return flavor === Flavor.DarwinUniversal ? 'darwin-universal' : `darwin-${Arch.Arm64}`;
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return `linux-${arch}`;
+                    switch (flavor) {
+                        case Flavor.Default:
+                            return `linux-${arch}`;
+                        case Flavor.LinuxDeb:
+                            return `linux-deb-${arch}`;
+                        case Flavor.LinuxRPM:
+                            return `linux-rpm-${arch}`;
+                        case Flavor.LinuxSnap:
+                            return `linux-snap-${arch}`;
+                    }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
                     switch (flavor) {

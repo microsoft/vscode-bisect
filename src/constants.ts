@@ -122,6 +122,9 @@ export enum Flavor {
     DarwinUniversal = 'universal',
     WindowsUserInstaller = 'win32-user',
     WindowsSystemInstaller = 'win32-system',
+    LinuxDeb = 'linux-deb',
+    LinuxRPM = 'linux-rpm',
+    LinuxSnap = 'linux-snap',
     Cli = 'cli'
 }
 
@@ -133,6 +136,12 @@ export function flavorFromString(value: unknown): Flavor {
             return Flavor.WindowsUserInstaller;
         case 'win32-system':
             return Flavor.WindowsSystemInstaller;
+        case 'linux-deb':
+            return Flavor.LinuxDeb;
+        case 'linux-rpm':
+            return Flavor.LinuxRPM;
+        case 'linux-snap':
+            return Flavor.LinuxSnap;
         case 'cli':
             return Flavor.Cli;
         default: {

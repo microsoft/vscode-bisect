@@ -5,7 +5,7 @@
 
 import chalk from "chalk";
 import { IBuild } from "./builds.js";
-import { arch, Flavor, Platform, platform, Quality, Runtime } from "./constants.js";
+import { Arch, arch, Flavor, Platform, platform, Quality, Runtime } from "./constants.js";
 import { bisecter, BisectResponse } from "./bisect.js";
 
 class Sanity {
@@ -38,6 +38,11 @@ class Sanity {
                 break;
             case Platform.LinuxArm:
             case Platform.LinuxX64:
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
+                if (arch === Arch.X64) {
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
+                }
                 break;
             case Platform.WindowsArm:
             case Platform.WindowsX64:

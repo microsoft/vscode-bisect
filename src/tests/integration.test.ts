@@ -17,6 +17,10 @@ if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
 } else if (platform === Platform.WindowsArm || platform === Platform.WindowsX64) {
     platformFlavors.push(Flavor.WindowsUserInstaller);
     platformFlavors.push(Flavor.WindowsSystemInstaller);
+} else if (platform === Platform.LinuxArm || platform === Platform.LinuxX64) {
+    platformFlavors.push(Flavor.LinuxDeb);
+    platformFlavors.push(Flavor.LinuxRPM);
+    platformFlavors.push(Flavor.LinuxSnap);
 }
 
 const buildKinds: IBuildKind[] = [];
@@ -43,7 +47,7 @@ describe('Integration tests', () => {
             const build = await builds.fetchBuildByVersion(kind, '1.100');
             assert.ok(build.commit, `Expected commit to be defined for build ${buildKindToString(kind)}`);
 
-            const path = await builds.installBuild(build, { forceReDownload: true });
+            const path = await builds.downloadAndExtractBuild(build, { forceReDownload: true });
             assert.ok(fs.existsSync(path), `Expected path to exist for build ${buildKindToString(kind)}`);
 
             if (kind.flavor === Flavor.Default || kind.flavor === Flavor.Cli || kind.flavor === Flavor.DarwinUniversal) {

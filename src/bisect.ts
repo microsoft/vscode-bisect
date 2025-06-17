@@ -30,7 +30,7 @@ class Bisecter {
         const { goodCommit, badCommit } = await this.resolveCommits({ runtime, quality, flavor }, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds({runtime, quality, flavor}, goodCommit, badCommit, releasedOnly);
+        const buildsRange = await builds.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly);
 
         LOGGER.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 
@@ -105,8 +105,7 @@ class Bisecter {
                     type: 'confirm',
                     name: 'open',
                     initial: true,
-                    message: 'Would you like to open GitHub for the list of changes?',
-
+                    message: 'Would you like to open GitHub for the list of changes?'
                 }
             ]);
 
