@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { URL } from 'node:url';
 import { URI } from 'vscode-uri';
 import open from 'open';
+import prompts from 'prompts';
 import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
@@ -88,6 +89,29 @@ class Launcher {
 
             // Desktop
             case Runtime.DesktopLocal:
+                if (path && (build.flavor === Flavor.LinuxDeb || build.flavor === Flavor.LinuxRPM || build.flavor === Flavor.LinuxSnap)) {
+                    let prompt: string;
+                    switch (build.flavor) {
+                        case Flavor.LinuxDeb:
+                            prompt = `Please run ${chalk.green(`sudo dpkg -i ${path}`)} to install and test the build.`;
+                            break;
+                        case Flavor.LinuxRPM:
+                            prompt = `Please run ${chalk.green(`sudo dpkg -i ${path}`)} to install and test the build.`;
+                            break;
+                        case Flavor.LinuxSnap:
+                            prompt = `Please run ${chalk.green(`sudo snap install ${path} --dangerous`)} to install and test the build.`;
+                            break;
+                    }
+
+                    await prompts({
+                        type: 'confirm',
+                        name: 'install',
+                        message: prompt
+                    });
+
+                    return NOOP_INSTANCE;
+                }
+
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
                     return this.runWindowsDesktopInstaller(path);
