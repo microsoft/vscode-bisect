@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import prompts from "prompts";
 import chalk from "chalk";
 import { IBuild } from "./builds.js";
 import { arch, Flavor, Platform, platform, Quality, Runtime } from "./constants.js";
