@@ -38,6 +38,9 @@ class Sanity {
                 break;
             case Platform.LinuxArm:
             case Platform.LinuxX64:
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
                 break;
             case Platform.WindowsArm:
             case Platform.WindowsX64:

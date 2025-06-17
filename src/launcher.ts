@@ -60,7 +60,7 @@ class Launcher {
         // Install (unless web remote)
         let path: string | undefined;
         if (build.runtime !== Runtime.WebRemote) {
-            path = await builds.installBuild(build, options);
+            path = await builds.downloadAndExtractBuild(build, options);
         }
 
         // Launch according to runtime
@@ -286,7 +286,7 @@ class Launcher {
             );
         }
 
-         return spawn(executable, args);
+        return spawn(executable, args);
     }
 
     private async getExecutablePath(build: IBuild): Promise<string> {
