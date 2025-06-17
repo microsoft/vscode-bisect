@@ -371,13 +371,13 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return join(buildPath, buildName, 'Contents', 'Resources', 'app', 'bin', 'code')
+                    return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders' : 'code')
+                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders.cmd' : 'code.cmd')
+                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
             }
         }
 

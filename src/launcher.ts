@@ -286,7 +286,7 @@ class Launcher {
             );
         }
 
-        return spawn(`"${executable}"`, args, { shell: true });
+         return spawn(executable, args);
     }
 
     private async getExecutablePath(build: IBuild): Promise<string> {
