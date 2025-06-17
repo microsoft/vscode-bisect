@@ -4,7 +4,7 @@ applyTo: '**'
 
 <rules>
     <memory>
-    If you need a reference for what each file does, check out #file:../docs/memory.md.
+    If you need a reference for what each file does, check out #file:../docs/memory.md
 
     When you create a new file, update #file:../docs/memory.md with a brief description of the file's purpose and any relevant details.
     </memory>

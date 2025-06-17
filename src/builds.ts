@@ -137,7 +137,7 @@ class Builds {
     }
 
     async installBuild({ runtime, commit, quality, flavor }: IBuild, options?: { forceReDownload: boolean }): Promise<string> {
-        const buildName = await this.getBuildArchiveName({ runtime, commit, quality, flavor });
+        const buildName = await this.getBuildDownloadName({ runtime, commit, quality, flavor });
 
         const path = join(getBuildPath(commit, quality, flavor), buildName);
 
@@ -185,7 +185,7 @@ class Builds {
         return path;
     }
 
-    private async getBuildArchiveName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
+    private async getBuildDownloadName({ runtime, commit, quality, flavor }: IBuild): Promise<string> {
 
         // Server
         if (runtime === Runtime.WebLocal || runtime === Runtime.WebRemote) {
@@ -215,8 +215,14 @@ class Builds {
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
                     const buildMeta = await this.fetchBuildMeta({ runtime, commit, quality, flavor });
-
-                    return `VSCode-win32-${arch}-${buildMeta.productVersion}.zip`;
+                    switch (flavor) {
+                        case Flavor.Default:
+                            return `VSCode-win32-${arch}-${buildMeta.productVersion}.zip`;
+                        case Flavor.WindowsSystemInstaller:
+                            return `VSCodeSetup-${arch}-${buildMeta.productVersion}.exe`;
+                        case Flavor.WindowsUserInstaller:
+                            return `VSCodeUserSetup-${arch}-${buildMeta.productVersion}.exe`;
+                    }
                 }
             }
         }
@@ -371,13 +377,13 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return join(buildPath, buildName, 'Contents', 'Resources', 'app', 'bin', 'code')
+                    return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders' : 'code')
+                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-insiders.cmd' : 'code.cmd')
+                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
             }
         }
 

@@ -30,6 +30,7 @@
     "dependencies": {
         "@vscode/vscode-perf": "^0.0.22",
         "chalk": "^5.x",
+        "clipboardy": "^4.0.0",
         "commander": "^14.x",
         "fflate": "^0.8.2",
         "follow-redirects": "^1.15.9",
