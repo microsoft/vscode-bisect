@@ -50,7 +50,7 @@ export default async function main(argv: string[]): Promise<void> {
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
         .addOption(new Option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`).hideHelp())
-        .option('-s, --sanity', 'runs multiple flavors of a build for sanity testing purposes (requires --commit)')
+        .option('-s, --sanity', 'runs multiple flavors of a build for sanity testing purposes (requires --commit with a commit hash)')
         .option('--verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
@@ -73,7 +73,7 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
     }
 
     if (opts.sanity) {
-        if (opts.perf || opts.good || opts.bad || !opts.commit) {
+        if (opts.perf || opts.good || opts.bad || !opts.commit || opts.commit === 'latest') {
             throw new Error(`Sanity testing requires a specific commit to be set via ${chalk.green('--commit')}.`);
         }
     }
