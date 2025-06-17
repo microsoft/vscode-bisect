@@ -276,34 +276,9 @@ class Launcher {
                 LOGGER.trace(`${chalk.gray(build.flavor === Flavor.Cli ? '[cli]' : '[electron]')}: ${data.toString()}`);
 
                 if (build.flavor === Flavor.Cli) {
-                    const output: string = data.toString().trim();
-                    if (output.includes('github.com/login/device')) {
-                        const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
-                        if (codeMatch) {
-                            const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
-                            clipboard.writeSync(code);
-                            open(`https://github.com/login/device`);
-                        }
-                    } else if (output.includes('microsoft.com/devicelogin')) {
-                        const codeMatch = output.match(/code ([A-Z0-9]{9})/);
-                        if (codeMatch) {
-                            const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
-                            clipboard.writeSync(code);
-                            open(`https://microsoft.com/devicelogin`);
-                        }
-                    } else if (output.includes('Open this link in your browser')) {
-                        const url = output.substring('Open this link in your browser '.length);
-                        try {
-                            const href = new URL(url).href;
-                            LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
-                            open(`${href}?vscode-version=${build.commit}`);
-
-                            return resolve({ stop });
-                        } catch (error) {
-                            LOGGER.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
-                        }
+                    const done = this.onServerOutput(build, data);
+                    if (done) {
+                        return resolve({ stop });
                     }
                 }
             });
@@ -318,6 +293,40 @@ class Launcher {
         });
     }
 
+    private onServerOutput(build: IBuild, data: Buffer): boolean {
+        const output: string = data.toString().trim();
+        if (output.includes('github.com/login/device')) {
+            const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
+            if (codeMatch) {
+                const code = codeMatch[1];
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
+                clipboard.writeSync(code);
+                open(`https://github.com/login/device`);
+            }
+        } else if (output.includes('microsoft.com/devicelogin')) {
+            const codeMatch = output.match(/code ([A-Z0-9]{9})/);
+            if (codeMatch) {
+                const code = codeMatch[1];
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
+                clipboard.writeSync(code);
+                open(`https://microsoft.com/devicelogin`);
+            }
+        } else if (output.includes('Open this link in your browser')) {
+            const url = output.substring('Open this link in your browser '.length);
+            try {
+                const href = new URL(url).href;
+                LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
+                open(`${href}?vscode-version=${build.commit}`);
+
+                return true; // DONE
+            } catch (error) {
+                LOGGER.log(`${chalk.gray('[build]')} Invalid URL extracted: ${url}`);
+            }
+        }
+
+        return false; // NOT YET DONE
+    }
+
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
         const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
@@ -328,34 +337,40 @@ class Launcher {
 
         switch (flavor) {
             case Flavor.CliLinuxAmd64:
-                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliLinuxArm64:
-                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliLinuxArmv7:
-                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliAlpineAmd64:
-                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliAlpineArm64:
-                dockerCommand = `docker run -e COMMIT -it --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
         }
 
         LOGGER.log(`${chalk.gray('[docker]')} running command: ${chalk.green(dockerCommand)}`);
 
         const cp = spawn('sh', ['-c', dockerCommand], {
-            stdio: 'inherit',
+            stdio: 'pipe',
             env: { ...process.env, COMMIT: commit }
         });
 
-        return {
-            async stop() {
-                cp.kill();
-            }
-        }
+        cp.stderr.pipe(process.stderr);
+        cp.stdout.pipe(process.stdout);
+
+        return new Promise<IInstance>(resolve => {
+            cp.stdout.on('data', data => {
+                const done = this.onServerOutput(build, data);
+                if (done) {
+                    return resolve({ stop: async () => cp.kill() });
+                }
+            });
+        });
     }
 
     private async setupDockerBinfmt(): Promise<void> {
