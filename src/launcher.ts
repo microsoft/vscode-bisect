@@ -113,13 +113,13 @@ class Launcher {
         let installCommand: string;
         switch (flavor) {
             case Flavor.LinuxDeb:
-                installCommand = `sudo apt install ${path}`;
+                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
                 break;
             case Flavor.LinuxRPM:
-                installCommand = `sudo rpm -i ${path}`;
+                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
                 break;
             case Flavor.LinuxSnap:
-                installCommand = `sudo snap install ${path} --classic --dangerous`;
+                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
                 break;
         }
 
