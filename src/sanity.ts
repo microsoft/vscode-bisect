@@ -6,7 +6,7 @@
 import prompts from "prompts";
 import chalk from "chalk";
 import { IBuild } from "./builds.js";
-import { Flavor, Platform, platform, Quality, Runtime } from "./constants.js";
+import { arch, Flavor, Platform, platform, Quality, Runtime } from "./constants.js";
 import { bisecter, BisectResponse } from "./bisect.js";
 
 class Sanity {
@@ -16,30 +16,44 @@ class Sanity {
         const runtime = Runtime.DesktopLocal;
 
         const buildKinds: (IBuild & { label: string })[] = [
-            { commit, quality, runtime, flavor: Flavor.Default, label: 'Desktop' },
+            {
+                commit, quality, runtime, flavor: Flavor.Default, label: (() => {
+                    switch (platform) {
+                        case Platform.MacOSArm:
+                        case Platform.MacOSX64:
+                            return `macOS (${arch})`;
+                        case Platform.LinuxArm:
+                        case Platform.LinuxX64:
+                            return `Linux (${arch})`;
+                        case Platform.WindowsArm:
+                        case Platform.WindowsX64:
+                            return `Windows (${arch})`;
+                    }
+                })()
+            },
         ];
         switch (platform) {
             case Platform.MacOSArm:
             case Platform.MacOSX64:
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.DarwinUniversal, label: 'Darwin Universal' });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.DarwinUniversal, label: 'macOS (universal)' });
                 break;
             case Platform.LinuxArm:
             case Platform.LinuxX64:
                 break;
             case Platform.WindowsArm:
             case Platform.WindowsX64:
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsUserInstaller, label: 'Windows User Installer' });
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsSystemInstaller, label: 'Windows System Installer' });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsUserInstaller, label: `Windows User Installer (${arch})` });
+                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsSystemInstaller, label: `Windows System Installer (${arch})` });
                 break;
         }
-        buildKinds.push({ commit, quality, runtime, flavor: Flavor.Cli, label: 'CLI & Server' });
+        buildKinds.push({ commit, quality, runtime, flavor: Flavor.Cli, label: 'Server & CLI' });
 
         this.logWelcome();
 
         for (let i = 0; i < buildKinds.length; i++) {
             const build = buildKinds[i];
 
-            const result = await bisecter.tryBuild(build, { isBisecting: true, forceReDownload: false });
+            const result = await bisecter.tryBuild(build, { isBisecting: true, forceReDownload: false, label: build.label });
             switch (result) {
                 case BisectResponse.Bad:
                     console.log(`\n👉 Please report an issue at ${chalk.green('https://github.com/microsoft/vscode/issues')}\n`);
