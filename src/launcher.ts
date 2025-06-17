@@ -119,7 +119,7 @@ class Launcher {
                 installCommand = `sudo rpm -i ${path}`;
                 break;
             case Flavor.LinuxSnap:
-                installCommand = `sudo snap install ${path} --dangerous`;
+                installCommand = `sudo snap install ${path} --classic --dangerous`;
                 break;
         }
 
