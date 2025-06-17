@@ -111,15 +111,19 @@ class Launcher {
 
     private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance> {
         let installCommand: string;
+        let installLabel: string;
         switch (flavor) {
             case Flavor.LinuxDeb:
                 installCommand = `sudo apt install ${path}`;
+                installLabel = 'Debian package';
                 break;
             case Flavor.LinuxRPM:
                 installCommand = `sudo rpm -i ${path}`;
+                installLabel = 'RPM package';
                 break;
             case Flavor.LinuxSnap:
                 installCommand = `sudo snap install ${path} --dangerous`;
+                installLabel = 'Snap package';
                 break;
         }
 
@@ -128,7 +132,7 @@ class Launcher {
         const { installed } = await prompts({
             type: 'confirm',
             name: 'installed',
-            message: `Please open a new terminal, paste from clipboard and run to install. Continue when done.`,
+            message: `Please open a new terminal, paste from clipboard and run to install ${chalk.green(installLabel)}. Continue when done.`,
             initial: true
         });
 
