@@ -11,7 +11,7 @@ import { builds, IBuild, IBuildKind } from './builds.js';
 import { logTroubleshoot, USER_DATA_FOLDER, LOGGER } from './constants.js';
 import { launcher } from './launcher.js';
 
-enum BisectResponse {
+export enum BisectResponse {
     Good = 1,
     Bad,
     Quit

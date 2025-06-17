@@ -14,6 +14,7 @@ import { git } from './git.js';
 import { BUILD_FOLDER, CONFIG, Flavor, flavorFromString, LOGGER, logTroubleshoot, Quality, qualityFromString, ROOT, Runtime, runtimeFromString } from './constants.js';
 import { builds, IBuildKind } from './builds.js';
 import { exists } from './files.js';
+import { sanity } from './sanity.js';
 
 const require = createRequire(import.meta.url);
 
@@ -28,6 +29,7 @@ export default async function main(argv: string[]): Promise<void> {
         good?: string;
         bad?: string;
         releasedOnly?: boolean;
+        sanity?: boolean;
         verbose?: boolean;
         reset?: boolean;
         perf?: boolean | string;
@@ -48,6 +50,7 @@ export default async function main(argv: string[]): Promise<void> {
         .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
         .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
         .addOption(new Option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`).hideHelp())
+        .option('-s, --sanity', 'runs multiple flavors of a build for sanity testing purposes (requires --commit)')
         .option('--verbose', 'logs verbose output to the console when errors occur');
 
     program.addHelpText('after', `
@@ -67,6 +70,16 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
             LOGGER.log(`${chalk.gray('[build]')} deleting cache directory ${chalk.green(ROOT)}`);
             rmSync(ROOT, { recursive: true });
         } catch (error) { }
+    }
+
+    if (opts.sanity) {
+        if (opts.perf || opts.good || opts.bad || !opts.commit) {
+            throw new Error(`Sanity testing requires a specific commit to be set via ${chalk.green('--commit')}.`);
+        }
+    }
+
+    if (opts.version && opts.commit) {
+        throw new Error(`Only provide either ${chalk.green('--version')} or ${chalk.green('--commit')}.`);
     }
 
     if (opts.perf) {
@@ -153,8 +166,13 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
             }
         }
 
+        // Sanity testing: launch all flavors for the specified commit
+        if (opts.sanity && opts.commit) {
+            await sanity.testAllFlavors(opts.commit);
+        }
+
         // Commit provided: launch only that commit
-        if (commit) {
+        else if (commit) {
             await bisecter.tryBuild({ commit, runtime, quality, flavor }, { isBisecting: false, forceReDownload: false });
         }
 

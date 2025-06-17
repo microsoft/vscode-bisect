@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { mkdirSync, rmSync } from 'node:fs';
-import { promisify } from 'node:util';
+import clipboard from 'clipboardy';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { URL } from 'node:url';
@@ -229,13 +229,17 @@ class Launcher {
                         const codeMatch = output.match(/code ([A-Z0-9]{4}-[A-Z0-9]{4})/);
                         if (codeMatch) {
                             const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)}`);
+                            LOGGER.log(`${chalk.gray('[build]')} Open ${chalk.underline('https://github.com/login/device')} and use code ${chalk.green(code)} to log in`);
+                            clipboard.writeSync(code);
+                            open(`https://github.com/login/device`);
                         }
                     } else if (output.includes('microsoft.com/devicelogin')) {
                         const codeMatch = output.match(/code ([A-Z0-9]{9})/);
                         if (codeMatch) {
                             const code = codeMatch[1];
-                            LOGGER.log(`${chalk.gray('[build]')} Log into ${chalk.underline('https://microsoft.com/devicelogin')} and use code ${chalk.green(code)}`);
+                            LOGGER.log(`${chalk.gray('[build]')} Open ${chalk.underline('https://microsoft.com/devicelogin')} and use code ${chalk.green(code)} to log in`);
+                            clipboard.writeSync(code);
+                            open(`https://microsoft.com/devicelogin`);
                         }
                     } else if (output.includes('Open this link in your browser')) {
                         const url = output.substring('Open this link in your browser '.length);
