@@ -128,14 +128,16 @@ class Launcher {
                 break;
         }
 
-        clipboard.writeSync(installCommand);
+        const didWriteToClipboard = this.safeWriteClipboardSync(installCommand);
 
         console.log();
         const { status } = await prompts([
             {
                 type: 'select',
                 name: 'status',
-                message: `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.`,
+                message: didWriteToClipboard ?
+                    `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.` :
+                    `Please open a new terminal, and run ${chalk.green(installCommand)} to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.`,
                 choices: [
                     { title: 'Done', value: 'done' },
                     { title: 'Skip', value: 'skip' },
@@ -153,6 +155,16 @@ class Launcher {
             async stop() {
                 cp.kill();
             }
+        }
+    }
+
+    private safeWriteClipboardSync(text: string): boolean {
+        try {
+            clipboard.writeSync(text);
+            return true;
+        } catch (error) {
+            LOGGER.log(`${chalk.red('[error]')} Failed to write to clipboard: ${error}`);
+            return false;
         }
     }
 
@@ -301,7 +313,7 @@ class Launcher {
             if (codeMatch) {
                 const code = codeMatch[1];
                 LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://github.com/login/device')} with code ${chalk.green(code)} to log in...`);
-                clipboard.writeSync(code);
+                this.safeWriteClipboardSync(code);
                 open(`https://github.com/login/device`);
             }
         } else if (output.includes('microsoft.com/devicelogin')) {
@@ -309,7 +321,7 @@ class Launcher {
             if (codeMatch) {
                 const code = codeMatch[1];
                 LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline('https://microsoft.com/devicelogin')} with code ${chalk.green(code)} to log in....`);
-                clipboard.writeSync(code);
+                this.safeWriteClipboardSync(code);
                 open(`https://microsoft.com/devicelogin`);
             }
         } else if (output.includes('Open this link in your browser')) {
