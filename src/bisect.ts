@@ -71,6 +71,25 @@ class Bisecter {
         }
     }
 
+    logWelcome(): void {
+        console.clear();
+
+        const banner = `
+${chalk.green('╔══════════════════════════════════════════════════════════════╗')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.bold('VS Code Build Sanity Checker')}                              ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('How it works:')}                                             ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Run different program versions step by step')}             ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Verify the bug reproduces ("bad") or not ("good")')}       ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Find the commit range causing the issue')}                 ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('╚══════════════════════════════════════════════════════════════╝')}
+`;
+
+        console.log(banner);
+    }
+
     private async resolveCommits({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string) {
         return {
             goodCommit: await this.resolveCommit({ runtime, quality, flavor }, goodCommitOrVersion),

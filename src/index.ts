@@ -105,6 +105,8 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
         let badCommitOrVersion = opts.bad;
         let goodCommitOrVersion = opts.good;
         if (!opts.commit && !opts.version) {
+            bisecter.logWelcome();
+
             if (!badCommitOrVersion) {
                 const response = await prompts([
                     {
