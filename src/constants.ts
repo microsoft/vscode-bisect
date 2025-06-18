@@ -198,10 +198,12 @@ export const CONFIG = {
 export function logTroubleshoot(): void {
     const packageJson = require('../package.json');
 
-    console.log(`\n${chalk.bold('Error Troubleshooting Guide:')}
+    console.log(`
+${chalk.bold('Error Troubleshooting Guide:')}
 - run ${chalk.green('vscode-bisect --verbose')} for more detailed output
 - run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
-- run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})`);
+- run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})
+`);
 }
 
 let TESTING = false;

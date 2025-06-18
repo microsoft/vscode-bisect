@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import open from 'open';
 import { rmSync } from 'node:fs';
 import { builds, IBuild, IBuildKind } from './builds.js';
-import { logTroubleshoot, USER_DATA_FOLDER, LOGGER } from './constants.js';
+import { logTroubleshoot, USER_DATA_FOLDER, LOGGER, Runtime, Flavor } from './constants.js';
 import { launcher } from './launcher.js';
 
 export enum BisectResponse {
@@ -100,6 +100,7 @@ class Bisecter {
         if (goodBuild && badBuild) {
             LOGGER.log(`${chalk.gray('[build]')} ${chalk.green(badBuild.commit)} is the first bad commit after ${chalk.green(goodBuild.commit)}.`);
 
+            console.log();
             const response = await prompts([
                 {
                     type: 'confirm',
@@ -148,30 +149,28 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         try {
             const instance = await launcher.launch(build, options);
 
+            console.log();
             const response = options.isBisecting ? await prompts([
                 {
                     type: 'select',
                     name: 'status',
                     message: `Is ${chalk.green(options.label ?? build.commit)} good or bad?`,
-                    choices: [
-                        { title: 'Good', value: 'good' },
-                        { title: 'Bad', value: 'bad' },
-                        { title: 'Retry', value: 'retry' },
-                        { title: 'Retry (fresh user data dir)', value: 'retry-fresh' }
-                    ]
+                    choices: (() => {
+                        const choices = [
+                            { title: 'Good', value: 'good' },
+                            { title: 'Bad', value: 'bad' },
+                            { title: 'Retry', value: 'retry' }
+                        ];
+
+                        if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
+                            choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
+                        }
+
+                        return choices;
+                    })()
                 }
-            ]) : await prompts([
-                {
-                    type: 'select',
-                    name: 'status',
-                    message: `Would you like to restart ${chalk.green(options.label ?? build.commit)}?`,
-                    choices: [
-                        { title: 'Yes', value: 'retry' },
-                        { title: 'Yes (fresh user data dir)', value: 'retry-fresh' },
-                        { title: 'No', value: 'no' }
-                    ]
-                }
-            ]);
+            ]) : await this.promptToRestart(build, options.label);
+            console.log();
 
             await instance.stop();
 
@@ -187,24 +186,15 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         } catch (error) {
             LOGGER.log(`${chalk.red('\n[error]')} ${error}\n`);
 
-            const response = await prompts([
-                {
-                    type: 'select',
-                    name: 'status',
-                    message: `Would you like to retry?`,
-                    choices: [
-                        { title: 'Yes', value: 'yes' },
-                        { title: 'Yes (fresh user data dir)', value: 'yes-fresh' },
-                        { title: 'No', value: 'no' }
-                    ]
-                }
-            ]);
+            console.log();
+            const response = await this.promptToRestart(build, options.label);
+            console.log();
 
-            if (response.status === 'yes-fresh') {
+            if (response.status === 'retry-fresh') {
                 this.cleanUserDataDir();
             }
 
-            if (response.status === 'yes' || response.status === 'yes-fresh') {
+            if (response.status === 'retry' || response.status === 'retry-fresh') {
                 return this.tryBuild(build, { ...options, forceReDownload: true });
             }
 
@@ -212,6 +202,29 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
 
             return BisectResponse.Quit;
         }
+    }
+
+    private async promptToRestart(build: IBuild, label?: string) {
+        return await prompts([
+            {
+                type: 'select',
+                name: 'status',
+                message: `Would you like to restart ${chalk.green(label ?? build.commit)}?`,
+                choices: (() => {
+                    const choices = [
+                        { title: 'Yes', value: 'retry' }
+                    ];
+
+                    if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
+                        choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
+                    }
+
+                    choices.push({ title: 'No', value: 'no' });
+
+                    return choices;
+                })()
+            }
+        ]);
     }
 
     private cleanUserDataDir(): void {
