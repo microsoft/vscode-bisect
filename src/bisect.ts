@@ -167,6 +167,9 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, isBisecting: boolean, label?: string }): Promise<BisectResponse> {
         try {
             const instance = await launcher.launch(build, options);
+            if (!instance) {
+                return BisectResponse.Good;
+            }
 
             console.log();
             const response = options.isBisecting ? await prompts([
@@ -184,6 +187,8 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
                             choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
                         }
+
+                        choices.push({ title: 'Quit', value: 'quit' });
 
                         return choices;
                     })()
@@ -235,7 +240,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     ];
 
                     if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
-                        choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
+                        choices.push({ title: 'Yes (fresh user data dir)', value: 'retry-fresh' });
                     }
 
                     choices.push({ title: 'No', value: 'no' });

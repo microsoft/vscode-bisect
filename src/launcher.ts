@@ -56,7 +56,7 @@ class Launcher {
         mkdirSync(DATA_FOLDER, { recursive: true });
     }
 
-    async launch(build: IBuild, options?: { forceReDownload: boolean }): Promise<IInstance> {
+    async launch(build: IBuild, options?: { forceReDownload: boolean }): Promise<IInstance | undefined> {
 
         // Install (unless web remote)
         let path: string | undefined;
@@ -114,7 +114,7 @@ class Launcher {
         }
     }
 
-    private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance> {
+    private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance | undefined> {
         let installCommand: string;
         switch (flavor) {
             case Flavor.LinuxDeb:
@@ -144,7 +144,7 @@ class Launcher {
         ]);
 
         if (status === 'skip') {
-            return NOOP_INSTANCE;
+            return undefined;
         }
 
         const cp = spawn(quality === 'stable' ? 'code' : 'code-insiders', [], { shell: true });
