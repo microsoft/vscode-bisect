@@ -77,7 +77,7 @@ class Bisecter {
         const banner = `
 ${chalk.green('╔══════════════════════════════════════════════════════════════╗')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
-${chalk.green('║')}    ${chalk.bold('VS Code Build Sanity Checker')}                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.bold('VS Code Build Bisecter')}                                    ${chalk.green('║')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('How it works:')}                                             ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('• Run different program versions step by step')}             ${chalk.green('║')}
