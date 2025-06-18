@@ -142,7 +142,6 @@ class Launcher {
                 ]
             }
         ]);
-        console.log();
 
         if (status === 'skip') {
             return NOOP_INSTANCE;
