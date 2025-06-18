@@ -60,7 +60,7 @@ class Sanity {
             const result = await bisecter.tryBuild(build, { isBisecting: true, forceReDownload: false, label: build.label });
             switch (result) {
                 case BisectResponse.Bad:
-                    console.log(`\n👉 Please report an issue at ${chalk.green('https://github.com/microsoft/vscode/issues')}\n`);
+                    console.log(`👉 Please report an issue at ${chalk.green('https://github.com/microsoft/vscode/issues')}\n`);
                     break;
                 case BisectResponse.Quit:
                     return;
@@ -72,20 +72,20 @@ class Sanity {
         console.clear();
 
         const banner = `
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║    VS Code Build Sanity Checker                              ║
-║                                                              ║
-║    Sanity check flavors of VS Code Stable                    ║
-║                                                              ║
-║    How it works:                                             ║
-║    • Run different program flavors step by step              ║
-║    • Verify the program installs and runs as expected        ║
-║    • Continue to the next step                               ║
-║                                                              ║
-║    https://github.com/microsoft/vscode/wiki/Sanity-Check     ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+${chalk.green('╔══════════════════════════════════════════════════════════════╗')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.bold('VS Code Build Sanity Checker')}                              ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('Sanity check flavors of VS Code Stable')}                    ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('How it works:')}                                             ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Run different program flavors step by step')}              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Verify the program installs and runs as expected')}        ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('• Continue to the next step')}                               ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray('https://github.com/microsoft/vscode/wiki/Sanity-Check')}     ${chalk.green('║')}
+${chalk.green('║')}                                                              ${chalk.green('║')}
+${chalk.green('╚══════════════════════════════════════════════════════════════╝')}
 `;
 
         console.log(banner);

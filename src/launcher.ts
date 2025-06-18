@@ -130,6 +130,7 @@ class Launcher {
 
         clipboard.writeSync(installCommand);
 
+        console.log();
         const { status } = await prompts([
             {
                 type: 'select',
