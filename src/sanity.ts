@@ -59,14 +59,14 @@ class Sanity {
         for (let i = 0; i < buildKinds.length; i++) {
             const build = buildKinds[i];
 
-            const shouldContinue = await this.tryBuild(build, { forceReDownload: false, label: build.label });
+            const shouldContinue = await this.tryBuild(build, { forceReDownload: false, label: build.label, isLast: i === buildKinds.length - 1 });
             if (!shouldContinue) {
                 return;
             }
         }
     }
 
-    async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string }): Promise<boolean /* continue */> {
+    async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
         try {
             const instance = await launcher.launch(build, options);
             if (!instance) {
@@ -81,7 +81,7 @@ class Sanity {
                     message: `Running ${chalk.green(options.label)}`,
                     choices: (() => {
                         const choices = [
-                            { title: 'Next', value: 'next' },
+                            { title: options.isLast ? 'Done' : 'Next', value: 'next' },
                             { title: 'Retry', value: 'retry' }
                         ];
 
@@ -89,7 +89,9 @@ class Sanity {
                             choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
                         }
 
-                        choices.push({ title: 'Quit', value: 'quit' });
+                        if (!options.isLast) {
+                            choices.push({ title: 'Quit', value: 'quit' });
+                        }
 
                         return choices;
                     })()
