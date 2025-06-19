@@ -10,6 +10,7 @@ import { rmSync } from 'node:fs';
 import { builds, IBuild, IBuildKind } from './builds.js';
 import { logTroubleshoot, USER_DATA_FOLDER, LOGGER, Runtime, Flavor } from './constants.js';
 import { launcher } from './launcher.js';
+import { cleanUserDataDir } from './files.js';
 
 export enum BisectResponse {
     Good = 1,
@@ -164,7 +165,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         }
     }
 
-    async tryBuild(build: IBuild, options: { forceReDownload: boolean, isBisecting: boolean, label?: string }): Promise<BisectResponse> {
+    async tryBuild(build: IBuild, options: { forceReDownload: boolean, isBisecting: boolean }): Promise<BisectResponse> {
         try {
             const instance = await launcher.launch(build, options);
             if (!instance) {
@@ -176,7 +177,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                 {
                     type: 'select',
                     name: 'status',
-                    message: `Is ${chalk.green(options.label ?? build.commit)} good or bad?`,
+                    message: `Is ${chalk.green(build.commit)} good or bad?`,
                     choices: (() => {
                         const choices = [
                             { title: 'Good', value: 'good' },
@@ -193,13 +194,13 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         return choices;
                     })()
                 }
-            ]) : await this.promptToRestart(build, options.label);
+            ]) : await this.promptToRestart(build);
             console.log();
 
             await instance.stop();
 
             if (response.status === 'retry-fresh') {
-                this.cleanUserDataDir();
+                cleanUserDataDir();
             }
 
             if (response.status === 'retry' || response.status === 'retry-fresh') {
@@ -211,11 +212,11 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
             LOGGER.log(`${chalk.red('\n[error]')} ${error}\n`);
 
             console.log();
-            const response = await this.promptToRestart(build, options.label);
+            const response = await this.promptToRestart(build);
             console.log();
 
             if (response.status === 'retry-fresh') {
-                this.cleanUserDataDir();
+                cleanUserDataDir();
             }
 
             if (response.status === 'retry' || response.status === 'retry-fresh') {
@@ -228,12 +229,12 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
         }
     }
 
-    private async promptToRestart(build: IBuild, label?: string) {
+    private async promptToRestart(build: IBuild) {
         return await prompts([
             {
                 type: 'select',
                 name: 'status',
-                message: `Would you like to restart ${chalk.green(label ?? build.commit)}?`,
+                message: `Would you like to restart ${chalk.green(build.commit)}?`,
                 choices: (() => {
                     const choices = [
                         { title: 'Yes', value: 'retry' }
@@ -249,15 +250,6 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                 })()
             }
         ]);
-    }
-
-    private cleanUserDataDir(): void {
-        try {
-            LOGGER.log(`${chalk.gray('[build]')} cleaning user data directory...`);
-            rmSync(USER_DATA_FOLDER, { recursive: true });
-        } catch (error) {
-            // Ignore errors if directory doesn't exist
-        }
     }
 }
 

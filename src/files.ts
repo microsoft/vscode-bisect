@@ -3,12 +3,13 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import chalk from 'chalk';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, promises, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, promises, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { unzipSync } from 'fflate';
-import { BUILD_FOLDER, Flavor, Platform, platform, Quality } from './constants.js';
+import { BUILD_FOLDER, Flavor, LOGGER, Platform, platform, Quality, USER_DATA_FOLDER } from './constants.js';
 
 export async function exists(path: string): Promise<boolean> {
     try {
@@ -81,4 +82,13 @@ export async function computeSHA256(path: string): Promise<string> {
     const fileBuffer = await promises.readFile(path);
 
     return createHash('sha256').update(fileBuffer).digest('hex');
+}
+
+export function cleanUserDataDir(): void {
+    try {
+        LOGGER.log(`${chalk.gray('[build]')} cleaning user data directory...`);
+        rmSync(USER_DATA_FOLDER, { recursive: true });
+    } catch (error) {
+        // Ignore errors if directory doesn't exist
+    }
 }
