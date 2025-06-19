@@ -142,7 +142,7 @@ class Launcher {
                 type: 'select',
                 name: 'status',
                 message: didWriteToClipboard ?
-                    `Please open a new terminal, paste from clipboard and run to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.` :
+                    `Please open a new terminal, and run ${chalk.green(installCommand)} (added to clipboard) to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.` :
                     `Please open a new terminal, and run ${chalk.green(installCommand)} to install ${chalk.green(basename(path))}. Or 'Skip' if your Linux distribution does not support this installation method.`,
                 choices: [
                     { title: 'Done', value: 'done' },
