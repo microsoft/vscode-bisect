@@ -327,9 +327,9 @@ class Launcher {
         } else if (output.includes('Open this link in your browser')) {
             const url = output.substring('Open this link in your browser '.length);
             try {
-                const href = new URL(url).href;
+                const href = `${new URL(url).href}?vscode-version=${build.commit}`;
                 LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
-                open(`${href}?vscode-version=${build.commit}`);
+                open(href);
 
                 return true; // DONE
             } catch (error) {
