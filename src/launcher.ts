@@ -116,15 +116,21 @@ class Launcher {
 
     private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance | undefined> {
         let installCommand: string;
+        let executeCommand: string;
+        let executeArgs: string[] | undefined = undefined;
         switch (flavor) {
             case Flavor.LinuxDeb:
                 installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
+                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
                 break;
             case Flavor.LinuxRPM:
                 installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
+                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
                 break;
             case Flavor.LinuxSnap:
                 installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
+                executeCommand = 'snap';
+                executeArgs = ['run', quality === 'stable' ? 'code' : 'code-insiders'];
                 break;
         }
 
@@ -149,7 +155,7 @@ class Launcher {
             return undefined;
         }
 
-        const cp = spawn(quality === 'stable' ? 'code' : 'code-insiders', [], { shell: true });
+        const cp = spawn(executeCommand, executeArgs, { shell: true });
 
         return {
             async stop() {
@@ -327,9 +333,9 @@ class Launcher {
         } else if (output.includes('Open this link in your browser')) {
             const url = output.substring('Open this link in your browser '.length);
             try {
-                const href = new URL(url).href;
+                const href = `${new URL(url).href}?vscode-version=${build.commit}`;
                 LOGGER.log(`${chalk.gray('[build]')} Opening ${chalk.underline(href)} in your browser...`);
-                open(`${href}?vscode-version=${build.commit}`);
+                open(href);
 
                 return true; // DONE
             } catch (error) {
