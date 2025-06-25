@@ -287,7 +287,23 @@ class Launcher {
         const cp = await this.spawnBuild(build);
 
         async function stop() {
-            cp.kill();
+            return new Promise<void>((resolve, reject) => {
+                const pid = cp.pid!;
+                kill(pid, error => {
+                    if (error) {
+                        try {
+                            process.kill(pid, 0);
+                        } catch (error) {
+                            resolve();      // process doesn't exist anymore... so, all good
+                            return;
+                        }
+
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
         }
 
         return new Promise<IInstance>(resolve => {
