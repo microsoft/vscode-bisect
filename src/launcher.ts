@@ -8,6 +8,7 @@ import clipboard from 'clipboardy';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { basename, join } from 'node:path';
 import { URL } from 'node:url';
+import { homedir } from 'node:os';
 import { URI } from 'vscode-uri';
 import open from 'open';
 import prompts from 'prompts';
@@ -96,7 +97,7 @@ class Launcher {
 
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
-                    return this.runWindowsDesktopInstaller(build.quality, path);
+                    return this.runWindowsDesktopInstaller(build.flavor, build.quality, path);
                 }
 
                 if (isDockerCliFlavor(build.flavor)) {
@@ -174,7 +175,7 @@ class Launcher {
         }
     }
 
-    private async runWindowsDesktopInstaller(quality: Quality, path: string): Promise<IInstance | undefined> {
+    private async runWindowsDesktopInstaller(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality, path: string): Promise<IInstance | undefined> {
         console.log();
         const { status } = await prompts([
             {
@@ -192,15 +193,45 @@ class Launcher {
             return undefined;
         }
 
-        // Launch VS Code using system command based on quality
-        const executeCommand = quality === Quality.Stable ? 'code' : 'code-insiders';
-        const cp = spawn(executeCommand, [], { shell: true });
+        // Determine the exact executable path based on installer type and quality
+        const executablePath = this.getWindowsVSCodeExecutablePath(flavor, quality);
+        const cp = spawn(executablePath, [], { shell: false });
 
         return {
             async stop() {
                 cp.kill();
             }
         }
+    }
+
+    private getWindowsVSCodeExecutablePath(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality): string {
+        const isUserInstaller = flavor === Flavor.WindowsUserInstaller;
+        const isInsiders = quality === Quality.Insider;
+        
+        // Determine base directory
+        let baseDir: string;
+        if (isUserInstaller) {
+            // User installer installs to %LOCALAPPDATA%\Programs
+            const localAppData = process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local');
+            baseDir = join(localAppData, 'Programs');
+        } else {
+            // System installer installs to %PROGRAMFILES%
+            const programFiles = process.env['PROGRAMFILES'] || 'C:\\Program Files';
+            baseDir = programFiles;
+        }
+        
+        // Determine app folder and executable name
+        let appFolder: string;
+        let executableName: string;
+        if (isInsiders) {
+            appFolder = 'Microsoft VS Code Insiders';
+            executableName = 'Code - Insiders.exe';
+        } else {
+            appFolder = 'Microsoft VS Code';
+            executableName = 'Code.exe';
+        }
+        
+        return join(baseDir, appFolder, executableName);
     }
 
     private async runDesktopPerformance(build: IBuild): Promise<IInstance> {
