@@ -96,7 +96,7 @@ class Launcher {
 
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
-                    return this.runWindowsDesktopInstaller(path);
+                    return this.runWindowsDesktopInstaller(build.quality, path);
                 }
 
                 if (isDockerCliFlavor(build.flavor)) {
@@ -174,8 +174,27 @@ class Launcher {
         }
     }
 
-    private runWindowsDesktopInstaller(path: string): IInstance {
-        const cp = spawn(path, ['/silent']);
+    private async runWindowsDesktopInstaller(quality: Quality, path: string): Promise<IInstance | undefined> {
+        console.log();
+        const { status } = await prompts([
+            {
+                type: 'select',
+                name: 'status',
+                message: `Please run ${chalk.green(path)} to install VS Code. Click 'Done' when the installation is complete, or 'Skip' to skip this installation.`,
+                choices: [
+                    { title: 'Done', value: 'done' },
+                    { title: 'Skip', value: 'skip' },
+                ]
+            }
+        ]);
+
+        if (status === 'skip') {
+            return undefined;
+        }
+
+        // Launch VS Code using system command based on quality
+        const executeCommand = quality === Quality.Stable ? 'code' : 'code-insiders';
+        const cp = spawn(executeCommand, [], { shell: true });
 
         return {
             async stop() {
