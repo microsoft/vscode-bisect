@@ -24,7 +24,7 @@ if (platform === Platform.MacOSArm || platform === Platform.MacOSX64) {
 }
 
 const buildKinds: IBuildKind[] = [];
-for (const quality of [Quality.Stable, Quality.Insider]) {
+for (const quality of [Quality.Stable, Quality.Insider, Quality.Exploration]) {
     for (const flavor of platformFlavors) {
         for (const runtime of [Runtime.DesktopLocal, Runtime.WebLocal]) {
             if (flavor !== Flavor.Default && runtime === Runtime.WebLocal) {
