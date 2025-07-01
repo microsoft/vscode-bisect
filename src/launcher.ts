@@ -6,6 +6,7 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import clipboard from 'clipboardy';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
+import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { URL } from 'node:url';
 import { URI } from 'vscode-uri';
@@ -96,7 +97,7 @@ class Launcher {
 
                 if (path && (build.flavor === Flavor.WindowsUserInstaller || build.flavor === Flavor.WindowsSystemInstaller)) {
                     LOGGER.log(`${chalk.gray('[build]')} installing ${chalk.green(path)}...`);
-                    return this.runWindowsDesktopInstaller(path);
+                    return this.runWindowsDesktopInstaller(build.flavor, build.quality, path);
                 }
 
                 if (isDockerCliFlavor(build.flavor)) {
@@ -174,14 +175,48 @@ class Launcher {
         }
     }
 
-    private runWindowsDesktopInstaller(path: string): IInstance {
+    private runWindowsDesktopInstaller(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality, path: string): IInstance {
         const cp = spawn(path, ['/silent']);
+
+        const windowsExecutablePath = `"${this.getWindowsVSCodeExecutablePath(flavor, quality)}"`;
+        this.safeWriteClipboardSync(windowsExecutablePath);
+
+        console.log(`${chalk.gray('[build]')} Setup is running and will launch the build. If that is not the case, please open a new terminal, and run ${chalk.green(windowsExecutablePath)} (added to clipboard) to start.`);
 
         return {
             async stop() {
                 cp.kill();
             }
         }
+    }
+
+    private getWindowsVSCodeExecutablePath(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality): string {
+        const isUserInstaller = flavor === Flavor.WindowsUserInstaller;
+        const isInsiders = quality === Quality.Insider;
+
+        // Determine base directory
+        let baseDir: string;
+        if (isUserInstaller) {
+            // User installer installs to %LOCALAPPDATA%\Programs
+            const localAppData = process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local');
+            baseDir = join(localAppData, 'Programs');
+        } else {
+            // System installer installs to %PROGRAMFILES%
+            const programFiles = process.env['PROGRAMFILES'] || 'C:\\Program Files';
+            baseDir = programFiles;
+        }
+
+        let appFolder: string;
+        let executableName: string;
+        if (isInsiders) {
+            appFolder = 'Microsoft VS Code Insiders';
+            executableName = 'code-insiders.cmd';
+        } else {
+            appFolder = 'Microsoft VS Code';
+            executableName = 'code.cmd';
+        }
+
+        return join(baseDir, appFolder, 'bin', executableName);
     }
 
     private async runDesktopPerformance(build: IBuild): Promise<IInstance> {
@@ -240,24 +275,9 @@ class Launcher {
     private async launchLocalWebServer(build: IBuild): Promise<IWebInstance> {
         const cp = await this.spawnBuild(build);
 
-        async function stop() {
-            return new Promise<void>((resolve, reject) => {
-                const pid = cp.pid!;
-                kill(pid, error => {
-                    if (error) {
-                        try {
-                            process.kill(pid, 0);
-                        } catch (error) {
-                            resolve();      // process doesn't exist anymore... so, all good
-                            return;
-                        }
-
-                        reject(error);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
+        const that = this;
+        function stop() {
+            return that.treeKill(cp.pid!);
         }
 
         return new Promise<IWebInstance>(resolve => {
@@ -277,6 +297,25 @@ class Launcher {
         });
     }
 
+    private treeKill(pid: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            kill(pid, error => {
+                if (error) {
+                    try {
+                        process.kill(pid, 0);
+                    } catch (error) {
+                        resolve(); // process doesn't exist anymore... so, all good
+                        return;
+                    }
+
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     private async launchRemoteWeb(build: IBuild): Promise<IInstance> {
         open(VSCODE_DEV_URL(build.commit, build.quality));
 
@@ -286,8 +325,13 @@ class Launcher {
     private async launchElectronOrCLI(build: IBuild): Promise<IInstance> {
         const cp = await this.spawnBuild(build);
 
+        const that = this;
         async function stop() {
-            cp.kill();
+            if (build.flavor === Flavor.Cli) {
+                return that.treeKill(cp.pid!)
+            } else {
+                return cp.kill();
+            }
         }
 
         return new Promise<IInstance>(resolve => {
