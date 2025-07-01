@@ -86,10 +86,10 @@ class Sanity {
             {
                 type: 'select',
                 name: 'useDocker',
-                message: 'Are you assigned to sanity test builds locally or the server/cli via docker on all supported Linux architectures?',
+                message: 'Are you assigned to sanity test builds locally or the server/CLI via docker on all supported Linux architectures?',
                 choices: [
                     { title: 'Run builds locally', value: false },
-                    { title: 'Run server/CLI via Docker', value: true }
+                    { title: 'Run server/CLI via Docker (must be running)', value: true }
                 ]
             }
         ]);
