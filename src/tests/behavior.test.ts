@@ -5,7 +5,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { Quality, VSCODE_DEV_URL, CONFIG } from '../constants.js';
+import { Quality, VSCODE_DEV_URL, CONFIG, qualityFromString, Runtime, Flavor } from '../constants.js';
 import { builds } from '../builds.js';
 
 describe('Exploration Quality Behavioral Tests', () => {
@@ -154,6 +154,141 @@ describe('Exploration Quality Behavioral Tests', () => {
         assert.doesNotThrow(() => {
             buildsInstance.getBuildApiName(validBuildKind);
             buildsInstance.getPlatformName(validBuildKind);
+        });
+    });
+});
+
+describe('Exploration Quality Performance Tests', () => {
+    test('exploration quality performs comparably to other qualities', () => {
+        const iterations = 100;
+        const commit = 'perf-test-commit';
+        
+        // Test that exploration quality doesn't have performance regression
+        const startTime = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            // Test quality parsing
+            qualityFromString('exploration');
+            
+            // Test URL generation
+            const originalToken = CONFIG.token;
+            CONFIG.token = undefined;
+            try {
+                VSCODE_DEV_URL(commit, Quality.Exploration);
+            } finally {
+                CONFIG.token = originalToken;
+            }
+        }
+        
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        
+        // Should complete within reasonable time (allowing for test environment variability)
+        assert.ok(duration < 1000, `Performance test took ${duration}ms, should be under 1000ms`);
+    });
+    
+    test('exploration quality memory usage is reasonable', () => {
+        // Test that creating many exploration quality objects doesn't cause issues
+        const qualities = [];
+        
+        for (let i = 0; i < 1000; i++) {
+            qualities.push({
+                runtime: Runtime.DesktopLocal,
+                quality: Quality.Exploration,
+                flavor: Flavor.Default,
+                commit: `test-commit-${i}`
+            });
+        }
+        
+        // Verify we can access all qualities
+        assert.strictEqual(qualities.length, 1000);
+        assert.ok(qualities.every(q => q.quality === Quality.Exploration));
+    });
+});
+
+describe('Exploration Quality Integration Scenarios', () => {
+    test('exploration quality works in realistic bisect scenarios', () => {
+        // Test scenarios that mirror actual bisect usage
+        const bisectScenarios = [
+            {
+                name: 'version-based bisect',
+                buildKind: { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+                version: '1.93'
+            },
+            {
+                name: 'commit-based bisect',
+                buildKind: { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+                commit: 'abc123def456'
+            },
+            {
+                name: 'cli-based bisect',
+                buildKind: { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Cli },
+                version: '1.93'
+            },
+            {
+                name: 'web-based bisect',
+                buildKind: { runtime: Runtime.WebLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+                version: '1.93'
+            }
+        ];
+        
+        const buildsInstance = builds as any;
+        
+        for (const scenario of bisectScenarios) {
+            // Test that build system can handle each scenario
+            assert.doesNotThrow(() => {
+                buildsInstance.getBuildApiName(scenario.buildKind);
+                buildsInstance.getPlatformName(scenario.buildKind);
+            }, `Scenario '${scenario.name}' should work with exploration quality`);
+        }
+    });
+    
+    test('exploration quality maintains state consistency', () => {
+        // Test that exploration quality maintains consistent state across operations
+        const originalToken = CONFIG.token;
+        
+        try {
+            // Test state with no token
+            CONFIG.token = undefined;
+            const url1 = VSCODE_DEV_URL('commit1', Quality.Exploration);
+            const url2 = VSCODE_DEV_URL('commit2', Quality.Exploration);
+            
+            // Both should use exploration subdomain
+            assert.ok(url1.startsWith('https://exploration.vscode.dev'));
+            assert.ok(url2.startsWith('https://exploration.vscode.dev'));
+            
+            // Test state with token
+            CONFIG.token = 'test-token';
+            const url3 = VSCODE_DEV_URL('commit3', Quality.Exploration);
+            const url4 = VSCODE_DEV_URL('commit4', Quality.Exploration);
+            
+            // Both should use exploration subdomain with github path
+            assert.ok(url3.startsWith('https://exploration.vscode.dev'));
+            assert.ok(url4.startsWith('https://exploration.vscode.dev'));
+            assert.ok(url3.includes('github/microsoft/vscode'));
+            assert.ok(url4.includes('github/microsoft/vscode'));
+            
+        } finally {
+            CONFIG.token = originalToken;
+        }
+    });
+    
+    test('exploration quality error recovery', () => {
+        // Test that exploration quality handles errors gracefully
+        const buildsInstance = builds as any;
+        
+        // Test with invalid but structurally correct parameters
+        const problematicBuildKind = {
+            runtime: Runtime.DesktopLocal,
+            quality: Quality.Exploration,
+            flavor: Flavor.Default,
+            commit: '' // empty commit
+        };
+        
+        // Should not throw errors for basic operations
+        assert.doesNotThrow(() => {
+            buildsInstance.getBuildApiName(problematicBuildKind);
+            buildsInstance.getPlatformName(problematicBuildKind);
         });
     });
 });

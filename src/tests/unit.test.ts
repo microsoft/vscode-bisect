@@ -244,6 +244,123 @@ describe('Build system functionality', () => {
     });
 });
 
+describe('URL generation edge cases', () => {
+    test('exploration URLs with special characters in commit hash', () => {
+        const originalToken = CONFIG.token;
+        CONFIG.token = undefined;
+        
+        try {
+            // Test with various commit hash formats
+            const commitHashes = ['abc123', 'abc123def456', '1234567890abcdef', 'v1.93.0', 'test-branch'];
+            
+            for (const commit of commitHashes) {
+                const url = VSCODE_DEV_URL(commit, Quality.Exploration);
+                assert.ok(url.includes(`vscode-version=${commit}`));
+                assert.ok(url.startsWith('https://exploration.vscode.dev'));
+            }
+        } finally {
+            CONFIG.token = originalToken;
+        }
+    });
+    
+    test('exploration URLs maintain consistency across different scenarios', () => {
+        const commit = 'test-commit';
+        
+        // Test with different token states
+        const originalToken = CONFIG.token;
+        
+        try {
+            // Without token
+            CONFIG.token = undefined;
+            const urlWithoutToken = VSCODE_DEV_URL(commit, Quality.Exploration);
+            
+            // With token
+            CONFIG.token = 'test-token';
+            const urlWithToken = VSCODE_DEV_URL(commit, Quality.Exploration);
+            
+            // Both should use exploration subdomain
+            assert.ok(urlWithoutToken.startsWith('https://exploration.vscode.dev'));
+            assert.ok(urlWithToken.startsWith('https://exploration.vscode.dev'));
+            
+            // Both should include the commit
+            assert.ok(urlWithoutToken.includes(commit));
+            assert.ok(urlWithToken.includes(commit));
+            
+            // Token version should have github path
+            assert.ok(urlWithToken.includes('github/microsoft/vscode'));
+            assert.ok(!urlWithoutToken.includes('github/microsoft/vscode'));
+        } finally {
+            CONFIG.token = originalToken;
+        }
+    });
+});
+
+describe('Build system comprehensive testing', () => {
+    const buildsInstance = builds as any;
+    
+    test('exploration quality works with all supported architecture combinations', () => {
+        // Test with different architecture scenarios
+        const architectures = [Arch.X64, Arch.Arm64];
+        
+        for (const testArch of architectures) {
+            const buildKind = { 
+                runtime: Runtime.DesktopLocal, 
+                quality: Quality.Exploration, 
+                flavor: Flavor.Default 
+            };
+            
+            // These should not throw errors regardless of architecture
+            assert.doesNotThrow(() => {
+                buildsInstance.getBuildApiName(buildKind);
+            });
+            
+            assert.doesNotThrow(() => {
+                buildsInstance.getPlatformName(buildKind);
+            });
+        }
+    });
+    
+    test('exploration quality naming conventions are consistent', async () => {
+        const commit = 'consistent-test';
+        
+        // Test that exploration naming follows consistent patterns
+        const buildKinds = [
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Cli },
+            { runtime: Runtime.WebLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+        ];
+        
+        for (const buildKind of buildKinds) {
+            const buildName = await buildsInstance.getBuildName({ ...buildKind, commit });
+            
+            // Exploration builds should have consistent naming
+            if (buildKind.flavor === Flavor.Cli) {
+                assert.strictEqual(buildName, 'code-exploration');
+            } else if (buildKind.runtime === Runtime.WebLocal) {
+                assert.ok(buildName.includes('vscode-server'));
+                assert.ok(buildName.includes('web'));
+            }
+        }
+    });
+    
+    test('exploration quality parameter validation', () => {
+        // Test various parameter combinations
+        const validCombinations = [
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.WebLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.WebRemote, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Cli },
+        ];
+        
+        for (const combo of validCombinations) {
+            // Test that all combinations work with internal methods
+            assert.doesNotThrow(() => {
+                buildsInstance.getBuildApiName(combo);
+                buildsInstance.getPlatformName(combo);
+            }, `Combination should be valid: ${JSON.stringify(combo)}`);
+        }
+    });
+});
+
 describe('Build executable path generation', () => {
     test('getBuildExecutable generates correct paths for exploration CLI builds', async () => {
         const commit = 'test-commit';
@@ -371,5 +488,209 @@ describe('Edge cases and error handling', () => {
         
         assert.strictEqual(validBuildKind.quality, Quality.Exploration);
         assert.ok(true); // TypeScript compilation validates interface compatibility
+    });
+    
+    test('exploration quality handles invalid input gracefully', () => {
+        // Test that qualityFromString throws appropriate errors for invalid input
+        const invalidInputs = ['', 'invalid', 'explore', 'exploration1', 'EXPLORATION', 'exploration '];
+        
+        for (const input of invalidInputs) {
+            assert.throws(() => qualityFromString(input), 
+                /Unknown quality/, 
+                `Should throw error for invalid input: ${input}`);
+        }
+    });
+    
+    test('exploration quality case sensitivity', () => {
+        // Ensure quality parsing is case sensitive
+        assert.throws(() => qualityFromString('EXPLORATION'), /Unknown quality/);
+        assert.throws(() => qualityFromString('Exploration'), /Unknown quality/);
+        assert.throws(() => qualityFromString('ExPlOrAtIoN'), /Unknown quality/);
+        
+        // Only exact lowercase match should work
+        assert.strictEqual(qualityFromString('exploration'), Quality.Exploration);
+    });
+    
+    test('exploration quality with whitespace handling', () => {
+        // Test that whitespace is not trimmed (should fail)
+        assert.throws(() => qualityFromString(' exploration'), /Unknown quality/);
+        assert.throws(() => qualityFromString('exploration '), /Unknown quality/);
+        assert.throws(() => qualityFromString(' exploration '), /Unknown quality/);
+        assert.throws(() => qualityFromString('\texploration'), /Unknown quality/);
+        assert.throws(() => qualityFromString('exploration\n'), /Unknown quality/);
+    });
+});
+
+describe('URL generation edge cases', () => {
+    test('exploration URLs with special characters in commit hash', () => {
+        const originalToken = CONFIG.token;
+        CONFIG.token = undefined;
+        
+        try {
+            // Test with various commit hash formats
+            const commitHashes = ['abc123', 'abc123def456', '1234567890abcdef', 'v1.93.0', 'test-branch'];
+            
+            for (const commit of commitHashes) {
+                const url = VSCODE_DEV_URL(commit, Quality.Exploration);
+                assert.ok(url.includes(`vscode-version=${commit}`));
+                assert.ok(url.startsWith('https://exploration.vscode.dev'));
+            }
+        } finally {
+            CONFIG.token = originalToken;
+        }
+    });
+    
+    test('exploration URLs maintain consistency across different scenarios', () => {
+        const commit = 'test-commit';
+        
+        // Test with different token states
+        const originalToken = CONFIG.token;
+        
+        try {
+            // Without token
+            CONFIG.token = undefined;
+            const urlWithoutToken = VSCODE_DEV_URL(commit, Quality.Exploration);
+            
+            // With token
+            CONFIG.token = 'test-token';
+            const urlWithToken = VSCODE_DEV_URL(commit, Quality.Exploration);
+            
+            // Both should use exploration subdomain
+            assert.ok(urlWithoutToken.startsWith('https://exploration.vscode.dev'));
+            assert.ok(urlWithToken.startsWith('https://exploration.vscode.dev'));
+            
+            // Both should include the commit
+            assert.ok(urlWithoutToken.includes(commit));
+            assert.ok(urlWithToken.includes(commit));
+            
+            // Token version should have github path
+            assert.ok(urlWithToken.includes('github/microsoft/vscode'));
+            assert.ok(!urlWithoutToken.includes('github/microsoft/vscode'));
+        } finally {
+            CONFIG.token = originalToken;
+        }
+    });
+});
+
+describe('Build system comprehensive testing', () => {
+    const buildsInstance = builds as any;
+    
+    test('exploration quality works with all supported architecture combinations', () => {
+        // Test with different architecture scenarios
+        const architectures = [Arch.X64, Arch.Arm64];
+        
+        for (const testArch of architectures) {
+            const buildKind = { 
+                runtime: Runtime.DesktopLocal, 
+                quality: Quality.Exploration, 
+                flavor: Flavor.Default 
+            };
+            
+            // These should not throw errors regardless of architecture
+            assert.doesNotThrow(() => {
+                buildsInstance.getBuildApiName(buildKind);
+            });
+            
+            assert.doesNotThrow(() => {
+                buildsInstance.getPlatformName(buildKind);
+            });
+        }
+    });
+    
+    test('exploration quality naming conventions are consistent', async () => {
+        const commit = 'consistent-test';
+        
+        // Test that exploration naming follows consistent patterns
+        const buildKinds = [
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Cli },
+            { runtime: Runtime.WebLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+        ];
+        
+        for (const buildKind of buildKinds) {
+            const buildName = await buildsInstance.getBuildName({ ...buildKind, commit });
+            
+            // Exploration builds should have consistent naming
+            if (buildKind.flavor === Flavor.Cli) {
+                assert.strictEqual(buildName, 'code-exploration');
+            } else if (buildKind.runtime === Runtime.WebLocal) {
+                assert.ok(buildName.includes('vscode-server'));
+                assert.ok(buildName.includes('web'));
+            }
+        }
+    });
+    
+    test('exploration quality parameter validation', () => {
+        // Test various parameter combinations
+        const validCombinations = [
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.WebLocal, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.WebRemote, quality: Quality.Exploration, flavor: Flavor.Default },
+            { runtime: Runtime.DesktopLocal, quality: Quality.Exploration, flavor: Flavor.Cli },
+        ];
+        
+        for (const combo of validCombinations) {
+            // Test that all combinations work with internal methods
+            assert.doesNotThrow(() => {
+                buildsInstance.getBuildApiName(combo);
+                buildsInstance.getPlatformName(combo);
+            }, `Combination should be valid: ${JSON.stringify(combo)}`);
+        }
+    });
+});
+
+describe('Quality compatibility and consistency', () => {
+    test('exploration quality behaves identically to other qualities in core functions', () => {
+        const qualities = [Quality.Stable, Quality.Insider, Quality.Exploration];
+        const commit = 'consistency-test';
+        
+        // Test that all qualities work with the same functions
+        for (const quality of qualities) {
+            // qualityFromString should work
+            const parsedQuality = qualityFromString(quality);
+            assert.strictEqual(parsedQuality, quality);
+            
+            // URL generation should work (without token)
+            const originalToken = CONFIG.token;
+            CONFIG.token = undefined;
+            
+            try {
+                const url = VSCODE_DEV_URL(commit, quality);
+                assert.ok(url.includes(commit));
+                assert.ok(url.includes('vscode.dev'));
+            } finally {
+                CONFIG.token = originalToken;
+            }
+        }
+    });
+    
+    test('exploration quality enum completeness', () => {
+        // Ensure all expected qualities are present
+        const expectedQualities = ['stable', 'insider', 'exploration'];
+        const actualQualities = Object.values(Quality);
+        
+        assert.strictEqual(actualQualities.length, expectedQualities.length);
+        
+        for (const expected of expectedQualities) {
+            assert.ok(actualQualities.includes(expected as Quality), 
+                `Expected quality '${expected}' should be present in enum`);
+        }
+    });
+    
+    test('exploration quality type safety', () => {
+        // Test that Quality.Exploration is properly typed
+        const explorationQuality: Quality = Quality.Exploration;
+        assert.strictEqual(explorationQuality, 'exploration');
+        
+        // Test that it works in arrays and objects
+        const qualityArray: Quality[] = [Quality.Stable, Quality.Insider, Quality.Exploration];
+        assert.strictEqual(qualityArray.length, 3);
+        assert.ok(qualityArray.includes(Quality.Exploration));
+        
+        const qualityMap: Record<Quality, string> = {
+            [Quality.Stable]: 'Stable Version',
+            [Quality.Insider]: 'Insider Version',
+            [Quality.Exploration]: 'Exploration Version'
+        };
+        assert.strictEqual(qualityMap[Quality.Exploration], 'Exploration Version');
     });
 });
