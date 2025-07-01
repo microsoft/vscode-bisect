@@ -304,7 +304,7 @@ class Launcher {
                     try {
                         process.kill(pid, 0);
                     } catch (error) {
-                        resolve();      // process doesn't exist anymore... so, all good
+                        resolve(); // process doesn't exist anymore... so, all good
                         return;
                     }
 

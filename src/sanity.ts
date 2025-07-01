@@ -13,48 +13,63 @@ import { launcher } from "./launcher.js";
 class Sanity {
 
     async testAllFlavors(commit: string): Promise<void> {
+        this.logWelcome();
+
         const quality = Quality.Stable;
         const runtime = Runtime.DesktopLocal;
 
-        const buildKinds: (IBuild & { label: string })[] = [
-            {
-                commit, quality, runtime, flavor: Flavor.Default, label: (() => {
-                    switch (platform) {
-                        case Platform.MacOSArm:
-                        case Platform.MacOSX64:
-                            return `macOS (${arch})`;
-                        case Platform.LinuxArm:
-                        case Platform.LinuxX64:
-                            return `Linux (${arch})`;
-                        case Platform.WindowsArm:
-                        case Platform.WindowsX64:
-                            return `Windows (${arch})`;
-                    }
-                })()
-            },
-        ];
-        switch (platform) {
-            case Platform.MacOSArm:
-            case Platform.MacOSX64:
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.DarwinUniversal, label: 'macOS (universal)' });
-                break;
-            case Platform.LinuxArm:
-            case Platform.LinuxX64:
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
-                if (arch === Arch.X64) {
-                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
-                }
-                break;
-            case Platform.WindowsArm:
-            case Platform.WindowsX64:
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsUserInstaller, label: `Windows User Installer (${arch})` });
-                buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsSystemInstaller, label: `Windows System Installer (${arch})` });
-                break;
-        }
-        buildKinds.push({ commit, quality, runtime, flavor: Flavor.Cli, label: 'Server & CLI' });
+        const useDocker = await this.promptUserForDocker();
 
-        this.logWelcome();
+        let buildKinds: (IBuild & { label: string })[] = [];
+        if (useDocker) {
+            buildKinds = [
+                { commit, quality, runtime, flavor: Flavor.CliLinuxAmd64, label: 'Server & CLI (AMD64)' },
+                { commit, quality, runtime, flavor: Flavor.CliLinuxArm64, label: 'Server & CLI (ARM64)' },
+                { commit, quality, runtime, flavor: Flavor.CliLinuxArmv7, label: 'Server & CLI (ARMv7)' },
+                { commit, quality, runtime, flavor: Flavor.CliAlpineAmd64, label: 'Server & CLI (Alpine AMD64)' },
+                { commit, quality, runtime, flavor: Flavor.CliAlpineArm64, label: 'Server & CLI (Alpine ARM64)' },
+            ]
+        } else {
+            buildKinds = [
+                {
+                    commit, quality, runtime, flavor: Flavor.Default, label: (() => {
+                        switch (platform) {
+                            case Platform.MacOSArm:
+                            case Platform.MacOSX64:
+                                return `macOS (${arch})`;
+                            case Platform.LinuxArm:
+                            case Platform.LinuxX64:
+                                return `Linux (${arch})`;
+                            case Platform.WindowsArm:
+                            case Platform.WindowsX64:
+                                return `Windows (${arch})`;
+                        }
+                    })()
+                },
+            ];
+
+            switch (platform) {
+                case Platform.MacOSArm:
+                case Platform.MacOSX64:
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.DarwinUniversal, label: 'macOS (universal)' });
+                    break;
+                case Platform.LinuxArm:
+                case Platform.LinuxX64:
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
+                    if (arch === Arch.X64) {
+                        buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
+                    }
+                    break;
+                case Platform.WindowsArm:
+                case Platform.WindowsX64:
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsUserInstaller, label: `Windows User Installer (${arch})` });
+                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.WindowsSystemInstaller, label: `Windows System Installer (${arch})` });
+                    break;
+            }
+
+            buildKinds.push({ commit, quality, runtime, flavor: Flavor.Cli, label: 'Server & CLI' });
+        }
 
         for (let i = 0; i < buildKinds.length; i++) {
             const build = buildKinds[i];
@@ -64,6 +79,22 @@ class Sanity {
                 return;
             }
         }
+    }
+
+    private async promptUserForDocker() {
+        const response = await prompts([
+            {
+                type: 'select',
+                name: 'useDocker',
+                message: 'Are you assigned to sanity test builds locally or the server/cli via docker on all supported Linux architectures?',
+                choices: [
+                    { title: 'Run builds locally', value: false },
+                    { title: 'Run server/CLI via Docker', value: true }
+                ]
+            }
+        ]);
+
+        return response.useDocker;
     }
 
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
