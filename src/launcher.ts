@@ -483,7 +483,8 @@ class Launcher {
                 '--disable-updates',
                 '--user-data-dir',
                 USER_DATA_FOLDER,
-                '--disable-telemetry'
+                '--disable-telemetry',
+                '--disable-experiments'
             );
         }
 
