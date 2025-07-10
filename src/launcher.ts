@@ -390,6 +390,44 @@ class Launcher {
         return false; // NOT YET DONE
     }
 
+    private async cleanupDockerContainers(): Promise<void> {
+        try {
+            LOGGER.log(`${chalk.gray('[docker]')} cleaning up any running containers...`);
+            
+            // Get all running containers and stop them
+            const listCommand = 'docker ps -q --filter "ancestor=mcr.microsoft.com/devcontainers/base:latest" --filter "ancestor=arm32v7/ubuntu" --filter "ancestor=amd64/alpine" --filter "ancestor=arm64v8/alpine"';
+            const cp = spawn('sh', ['-c', listCommand]);
+            
+            return new Promise<void>((resolve) => {
+                let containerIds = '';
+                
+                cp.stdout.on('data', (data) => {
+                    containerIds += data.toString();
+                });
+                
+                cp.on('close', async (code) => {
+                    if (code === 0 && containerIds.trim()) {
+                        const ids = containerIds.trim().split('\n').filter(id => id.trim());
+                        if (ids.length > 0) {
+                            LOGGER.log(`${chalk.gray('[docker]')} stopping ${ids.length} running containers...`);
+                            const stopCommand = `docker stop ${ids.join(' ')}`;
+                            await this.runDockerCommand(stopCommand);
+                        }
+                    }
+                    resolve();
+                });
+                
+                cp.on('error', () => {
+                    // Ignore cleanup errors
+                    resolve();
+                });
+            });
+        } catch (error) {
+            // Ignore cleanup errors
+            LOGGER.trace(`${chalk.gray('[docker]')} cleanup error: ${error}`);
+        }
+    }
+
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
         const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
@@ -426,6 +464,7 @@ class Launcher {
         cp.stderr.pipe(process.stderr);
         cp.stdout.pipe(process.stdout);
 
+        const that = this;
         return new Promise<IInstance>(resolve => {
             cp.stdout.on('data', data => {
                 const done = this.onServerOutput(build, data);
@@ -433,7 +472,9 @@ class Launcher {
                     return resolve({ 
                         stop: async () => {
                             // Force kill the process and any child processes
-                            await this.treeKill(cp.pid!);
+                            await that.treeKill(cp.pid!);
+                            // Also cleanup any Docker containers
+                            await that.cleanupDockerContainers();
                         }
                     });
                 }
