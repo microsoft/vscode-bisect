@@ -86,64 +86,11 @@ class Sanity {
         console.log(`${chalk.green('✓')} Sanity testing completed successfully!`);
         console.log(`${chalk.gray('Cleaning up and exiting...')}`);
         
-        // For Docker mode, run extra cleanup to ensure all containers are stopped
-        if (useDocker) {
-            await this.cleanupDockerContainers();
-        }
-        
         // Give a brief moment for any cleanup to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    private async cleanupDockerContainers(): Promise<void> {
-        try {
-            console.log(`${chalk.gray('Stopping any remaining Docker containers...')}`);
-            
-            // Get all running containers that might be from our test
-            const listCommand = 'docker ps -q --filter "ancestor=mcr.microsoft.com/devcontainers/base:latest" --filter "ancestor=arm32v7/ubuntu" --filter "ancestor=amd64/alpine" --filter "ancestor=arm64v8/alpine"';
-            const cp = spawn('sh', ['-c', listCommand]);
-            
-            return new Promise<void>((resolve) => {
-                let containerIds = '';
-                
-                cp.stdout.on('data', (data) => {
-                    containerIds += data.toString();
-                });
-                
-                cp.on('close', async (code) => {
-                    if (code === 0 && containerIds.trim()) {
-                        const ids = containerIds.trim().split('\n').filter(id => id.trim());
-                        if (ids.length > 0) {
-                            console.log(`${chalk.gray(`Found ${ids.length} running containers, stopping them...`)}`);
-                            const stopCommand = `docker stop ${ids.join(' ')}`;
-                            const stopCp = spawn('sh', ['-c', stopCommand]);
-                            
-                            stopCp.on('close', () => {
-                                console.log(`${chalk.gray('Docker cleanup completed.')}`);
-                                resolve();
-                            });
-                            
-                            stopCp.on('error', () => {
-                                resolve();
-                            });
-                        } else {
-                            resolve();
-                        }
-                    } else {
-                        resolve();
-                    }
-                });
-                
-                cp.on('error', () => {
-                    // Ignore cleanup errors
-                    resolve();
-                });
-            });
-        } catch (error) {
-            // Ignore cleanup errors
-            console.log(`${chalk.gray('Docker cleanup skipped due to error.')}`);
-        }
-    }
+
 
     private async promptUserForDocker() {
         const response = await prompts([
