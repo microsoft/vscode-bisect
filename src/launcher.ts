@@ -297,8 +297,6 @@ class Launcher {
         });
     }
 
-
-
     private treeKill(pid: number): Promise<void> {
         return new Promise((resolve, reject) => {
             kill(pid, error => {
@@ -392,8 +390,6 @@ class Launcher {
         return false; // NOT YET DONE
     }
 
-
-
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
         const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
@@ -438,7 +434,7 @@ class Launcher {
             cp.stdout.on('data', data => {
                 const done = this.onServerOutput(build, data);
                 if (done) {
-                    return resolve({ 
+                    return resolve({
                         stop: async () => {
                             // Stop the specific container by name
                             try {
@@ -446,7 +442,7 @@ class Launcher {
                             } catch (error) {
                                 LOGGER.trace(`${chalk.gray('[docker]')} failed to stop container ${containerName}: ${error}`);
                             }
-                            
+
                             // Also kill the local process to ensure cleanup
                             cp.kill();
                         }
