@@ -400,23 +400,26 @@ class Launcher {
 
         await this.setupDockerBinfmt();
 
+        // Generate a random container name
+        const containerName = `vscode-bisect-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
         let dockerCommand: string;
 
         switch (flavor) {
             case Flavor.CliLinuxAmd64:
-                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run --name ${containerName} -e COMMIT -i --rm --pull always --platform linux/amd64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliLinuxArm64:
-                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run --name ${containerName} -e COMMIT -i --rm --pull always --platform linux/arm64 mcr.microsoft.com/devcontainers/base:latest /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliLinuxArmv7:
-                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run --name ${containerName} -e COMMIT -i --rm --pull always --platform linux/arm/v7 arm32v7/ubuntu /bin/sh -c 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y wget libatomic1 ca-certificates python3-minimal && wget "https://update.code.visualstudio.com/commit:${commit}/cli-linux-armhf/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliAlpineAmd64:
-                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run --name ${containerName} -e COMMIT -i --rm --pull always --platform linux/amd64 amd64/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-x64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
             case Flavor.CliAlpineArm64:
-                dockerCommand = `docker run -e COMMIT -i --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
+                dockerCommand = `docker run --name ${containerName} -e COMMIT -i --rm --pull always --platform linux/arm64 arm64v8/alpine /bin/sh -c 'apk update && apk add musl libgcc libstdc++ && wget "https://update.code.visualstudio.com/commit:${commit}/cli-alpine-arm64/${quality}" -O- | tar -xz && ./code tunnel'`;
                 break;
         }
 
@@ -430,26 +433,6 @@ class Launcher {
         cp.stderr.pipe(process.stderr);
         cp.stdout.pipe(process.stdout);
 
-        // Try to get container ID from the spawned process
-        let containerId: string | undefined;
-        
-        // Listen for container creation by monitoring docker ps
-        const findContainerInterval = setInterval(() => {
-            if (!containerId) {
-                const psCommand = `docker ps --filter "ancestor=mcr.microsoft.com/devcontainers/base:latest" --filter "ancestor=arm32v7/ubuntu" --filter "ancestor=amd64/alpine" --filter "ancestor=arm64v8/alpine" --format "{{.ID}}" | head -1`;
-                
-                const psProcess = spawn('sh', ['-c', psCommand], { stdio: 'pipe' });
-                psProcess.stdout.on('data', (data) => {
-                    const id = data.toString().trim();
-                    if (id) {
-                        containerId = id;
-                        LOGGER.trace(`${chalk.gray('[docker]')} captured container ID: ${containerId}`);
-                        clearInterval(findContainerInterval);
-                    }
-                });
-            }
-        }, 1000);
-
         const that = this;
         return new Promise<IInstance>(resolve => {
             cp.stdout.on('data', data => {
@@ -457,16 +440,11 @@ class Launcher {
                 if (done) {
                     return resolve({ 
                         stop: async () => {
-                            clearInterval(findContainerInterval);
-                            
-                            // If we have a container ID, use docker stop to stop it specifically
-                            if (containerId) {
-                                LOGGER.log(`${chalk.gray('[docker]')} stopping container: ${containerId}`);
-                                try {
-                                    await that.runDockerCommand(`docker stop ${containerId}`);
-                                } catch (error) {
-                                    LOGGER.trace(`${chalk.gray('[docker]')} failed to stop container ${containerId}: ${error}`);
-                                }
+                            // Stop the specific container by name
+                            try {
+                                await that.runDockerCommand(`docker stop ${containerName}`);
+                            } catch (error) {
+                                LOGGER.trace(`${chalk.gray('[docker]')} failed to stop container ${containerName}: ${error}`);
                             }
                             
                             // Also kill the local process to ensure cleanup

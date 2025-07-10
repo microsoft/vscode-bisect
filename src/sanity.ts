@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import chalk from "chalk";
-import { spawn } from "child_process";
 import { IBuild } from "./builds.js";
 import { Arch, arch, Flavor, LOGGER, logTroubleshoot, Platform, platform, Quality, Runtime, USER_DATA_FOLDER } from "./constants.js";
 import prompts from "prompts";
@@ -80,17 +79,7 @@ class Sanity {
                 return;
             }
         }
-
-        // Add a completion message
-        console.log();
-        console.log(`${chalk.green('✓')} Sanity testing completed successfully!`);
-        console.log(`${chalk.gray('Cleaning up and exiting...')}`);
-        
-        // Give a brief moment for any cleanup to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-
 
     private async promptUserForDocker() {
         const response = await prompts([
