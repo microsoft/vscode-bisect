@@ -171,6 +171,8 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
         // Sanity testing: launch all flavors for the specified commit
         if (opts.sanity && opts.commit) {
             await sanity.testAllFlavors(opts.commit);
+            // Explicitly exit after sanity testing to ensure clean shutdown
+            process.exit(0);
         }
 
         // Commit provided: launch only that commit

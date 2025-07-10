@@ -79,6 +79,14 @@ class Sanity {
                 return;
             }
         }
+
+        // Add a completion message
+        console.log();
+        console.log(`${chalk.green('✓')} Sanity testing completed successfully!`);
+        console.log(`${chalk.gray('Cleaning up and exiting...')}`);
+        
+        // Give a brief moment for any cleanup to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     private async promptUserForDocker() {

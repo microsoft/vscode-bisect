@@ -430,7 +430,12 @@ class Launcher {
             cp.stdout.on('data', data => {
                 const done = this.onServerOutput(build, data);
                 if (done) {
-                    return resolve({ stop: async () => cp.kill() });
+                    return resolve({ 
+                        stop: async () => {
+                            // Force kill the process and any child processes
+                            await this.treeKill(cp.pid!);
+                        }
+                    });
                 }
             });
         });
