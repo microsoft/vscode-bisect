@@ -55,10 +55,23 @@ class Sanity {
                     break;
                 case Platform.LinuxArm:
                 case Platform.LinuxX64:
-                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
-                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
-                    if (arch === Arch.X64) {
-                        buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
+                    const selectedLinuxFlavors = await this.promptUserForLinuxFlavors();
+                    for (const flavor of selectedLinuxFlavors) {
+                        let label: string;
+                        switch (flavor) {
+                            case Flavor.LinuxDeb:
+                                label = 'Linux (Debian)';
+                                break;
+                            case Flavor.LinuxRPM:
+                                label = 'Linux (RPM)';
+                                break;
+                            case Flavor.LinuxSnap:
+                                label = 'Linux (Snap)';
+                                break;
+                            default:
+                                continue; // Skip unknown flavors
+                        }
+                        buildKinds.push({ commit, quality, runtime, flavor, label });
                     }
                     break;
                 case Platform.WindowsArm:
@@ -95,6 +108,30 @@ class Sanity {
         ]);
 
         return response.useDocker;
+    }
+
+    private async promptUserForLinuxFlavors(): Promise<Flavor[]> {
+        const choices = [
+            { title: 'Linux (Debian)', value: Flavor.LinuxDeb },
+            { title: 'Linux (RPM)', value: Flavor.LinuxRPM }
+        ];
+
+        // Only add Snap for X64 architecture
+        if (arch === Arch.X64) {
+            choices.push({ title: 'Linux (Snap)', value: Flavor.LinuxSnap });
+        }
+
+        const response = await prompts([
+            {
+                type: 'multiselect',
+                name: 'flavors',
+                message: 'Which Linux package formats would you like to test? (Select multiple with space, confirm with enter)',
+                choices: choices,
+                min: 0
+            }
+        ]);
+
+        return response.flavors || [];
     }
 
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
