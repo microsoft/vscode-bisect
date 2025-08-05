@@ -112,26 +112,44 @@ class Sanity {
 
     private async promptUserForLinuxFlavors(): Promise<Flavor[]> {
         const choices = [
-            { title: 'Linux (Debian)', value: Flavor.LinuxDeb },
-            { title: 'Linux (RPM)', value: Flavor.LinuxRPM }
+            { title: 'Test all Linux packages', value: 'all' },
+            { title: 'Test Debian package only', value: 'deb' },
+            { title: 'Test RPM package only', value: 'rpm' }
         ];
 
-        // Only add Snap for X64 architecture
+        // Only add Snap option for X64 architecture
         if (arch === Arch.X64) {
-            choices.push({ title: 'Linux (Snap)', value: Flavor.LinuxSnap });
+            choices.push({ title: 'Test Snap package only', value: 'snap' });
         }
+
+        choices.push({ title: 'Skip Linux testing', value: 'skip' });
 
         const response = await prompts([
             {
-                type: 'multiselect',
-                name: 'flavors',
-                message: 'Which Linux package formats would you like to test? (Select multiple with space, confirm with enter)',
-                choices: choices,
-                min: 0
+                type: 'select',
+                name: 'choice',
+                message: 'Which Linux packages would you like to test?',
+                choices: choices
             }
         ]);
 
-        return response.flavors || [];
+        switch (response.choice) {
+            case 'all':
+                const allFlavors = [Flavor.LinuxDeb, Flavor.LinuxRPM];
+                if (arch === Arch.X64) {
+                    allFlavors.push(Flavor.LinuxSnap);
+                }
+                return allFlavors;
+            case 'deb':
+                return [Flavor.LinuxDeb];
+            case 'rpm':
+                return [Flavor.LinuxRPM];
+            case 'snap':
+                return [Flavor.LinuxSnap];
+            case 'skip':
+            default:
+                return [];
+        }
     }
 
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
