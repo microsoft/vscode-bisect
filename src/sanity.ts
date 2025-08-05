@@ -111,45 +111,33 @@ class Sanity {
     }
 
     private async promptUserForLinuxFlavors(): Promise<Flavor[]> {
-        const choices = [
-            { title: 'Test all Linux packages', value: 'all' },
-            { title: 'Test Debian package only', value: 'deb' },
-            { title: 'Test RPM package only', value: 'rpm' }
-        ];
-
-        // Only add Snap option for X64 architecture
-        if (arch === Arch.X64) {
-            choices.push({ title: 'Test Snap package only', value: 'snap' });
-        }
-
-        choices.push({ title: 'Skip Linux testing', value: 'skip' });
-
         const response = await prompts([
             {
                 type: 'select',
                 name: 'choice',
-                message: 'Which Linux packages would you like to test?',
-                choices: choices
+                message: 'Which Linux package would you like to test?',
+                choices: [
+                    { title: 'Test Debian package', value: 'deb' },
+                    { title: 'Test RPM package', value: 'rpm' }
+                ]
             }
         ]);
 
-        switch (response.choice) {
-            case 'all':
-                const allFlavors = [Flavor.LinuxDeb, Flavor.LinuxRPM];
-                if (arch === Arch.X64) {
-                    allFlavors.push(Flavor.LinuxSnap);
-                }
-                return allFlavors;
-            case 'deb':
-                return [Flavor.LinuxDeb];
-            case 'rpm':
-                return [Flavor.LinuxRPM];
-            case 'snap':
-                return [Flavor.LinuxSnap];
-            case 'skip':
-            default:
-                return [];
+        const selectedFlavors = [];
+        
+        // Add the user's choice
+        if (response.choice === 'deb') {
+            selectedFlavors.push(Flavor.LinuxDeb);
+        } else {
+            selectedFlavors.push(Flavor.LinuxRPM);
         }
+
+        // Always add Snap on X64 architecture
+        if (arch === Arch.X64) {
+            selectedFlavors.push(Flavor.LinuxSnap);
+        }
+
+        return selectedFlavors;
     }
 
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
