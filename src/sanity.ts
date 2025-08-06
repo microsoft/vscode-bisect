@@ -55,10 +55,23 @@ class Sanity {
                     break;
                 case Platform.LinuxArm:
                 case Platform.LinuxX64:
-                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxDeb, label: `Linux (Debian)` });
-                    buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxRPM, label: `Linux (RPM)` });
-                    if (arch === Arch.X64) {
-                        buildKinds.push({ commit, quality, runtime, flavor: Flavor.LinuxSnap, label: `Linux (Snap)` });
+                    const selectedLinuxFlavors = await this.promptUserForLinuxFlavors();
+                    for (const flavor of selectedLinuxFlavors) {
+                        let label: string;
+                        switch (flavor) {
+                            case Flavor.LinuxDeb:
+                                label = 'Linux (Debian)';
+                                break;
+                            case Flavor.LinuxRPM:
+                                label = 'Linux (RPM)';
+                                break;
+                            case Flavor.LinuxSnap:
+                                label = 'Linux (Snap)';
+                                break;
+                            default:
+                                continue; // Skip unknown flavors
+                        }
+                        buildKinds.push({ commit, quality, runtime, flavor, label });
                     }
                     break;
                 case Platform.WindowsArm:
@@ -95,6 +108,36 @@ class Sanity {
         ]);
 
         return response.useDocker;
+    }
+
+    private async promptUserForLinuxFlavors(): Promise<Flavor[]> {
+        const response = await prompts([
+            {
+                type: 'select',
+                name: 'choice',
+                message: 'Which Linux package would you like to test?',
+                choices: [
+                    { title: 'Test Debian package', value: 'deb' },
+                    { title: 'Test RPM package', value: 'rpm' }
+                ]
+            }
+        ]);
+
+        const selectedFlavors = [];
+        
+        // Add the user's choice
+        if (response.choice === 'deb') {
+            selectedFlavors.push(Flavor.LinuxDeb);
+        } else {
+            selectedFlavors.push(Flavor.LinuxRPM);
+        }
+
+        // Always add Snap on X64 architecture
+        if (arch === Arch.X64) {
+            selectedFlavors.push(Flavor.LinuxSnap);
+        }
+
+        return selectedFlavors;
     }
 
     async tryBuild(build: IBuild, options: { forceReDownload: boolean, label: string, isLast: boolean }): Promise<boolean /* continue */> {
