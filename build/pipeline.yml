@@ -41,12 +41,12 @@ extends:
             architectures:
               - x64
               - arm64
-          - name: MacOS
-            nodeVersions:
-              - 22.x
-            architectures:
-              - x64
-              - arm64
+          # - name: MacOS
+          #   nodeVersions:
+          #     - 22.x
+          #   architectures:
+          #     - x64
+          #     - arm64
           - name: Windows
             nodeVersions:
               - 22.x
