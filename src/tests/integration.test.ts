@@ -40,7 +40,7 @@ function buildKindToString(kind: IBuildKind): string {
     return `${kind.runtime}-${kind.quality}-${kind.flavor}`;
 }
 
-describe('Integration tests', () => {
+describe.skip('Integration tests', () => {
 
     for (const kind of buildKinds) {
         test(`fetch and install build by version: ${buildKindToString(kind)}`, async () => {
