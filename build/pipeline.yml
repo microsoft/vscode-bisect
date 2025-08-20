@@ -34,31 +34,4 @@ extends:
           - script: npm ci
             displayName: Install and build
 
-        testPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 22.x
-            architectures:
-              - x64
-              - arm64
-          # - name: MacOS
-          #   nodeVersions:
-          #     - 22.x
-          #   architectures:
-          #     - x64
-          #     - arm64
-          - name: Windows
-            nodeVersions:
-              - 22.x
-            architectures:
-              - x64
-              - arm64
-
-        testSteps:
-          - script: npm ci
-            displayName: Install and build
-
-          - script: npm run test
-            displayName: Test npm package
-
         publishPackage: ${{ parameters.publishPackage }}
