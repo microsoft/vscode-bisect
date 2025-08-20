@@ -202,6 +202,7 @@ export function logTroubleshoot(): void {
 ${chalk.bold('Error Troubleshooting Guide:')}
 - run ${chalk.green('vscode-bisect --verbose')} for more detailed output
 - run ${chalk.green('vscode-bisect --reset')} to delete the cache folder
+- run ${chalk.green('vscode-bisect --exclude <commit1> <commit2>')} to exclude problematic commits from bisecting
 - run ${chalk.green(`npm install -g ${packageJson.name}`)} to update to the latest version (your version: ${chalk.green(packageJson.version)})
 `);
 }

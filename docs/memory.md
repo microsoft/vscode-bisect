@@ -54,6 +54,7 @@ This document serves as a quick reference for understanding what each important 
   - Orchestrates the bisect workflow from start to finish
   - Provides final results and GitHub link generation
   - Includes cleanUserDataDir() method for clearing cached user data
+  - Supports excluding specific commits from bisecting (excludeCommits parameter)
 
 ### `src/builds.ts`
 - **Purpose**: Build fetching, caching, installation, and metadata management
@@ -65,6 +66,7 @@ This document serves as a quick reference for understanding what each important 
   - Platform-specific archive handling (zip for Windows/macOS, tar.gz for Linux)
   - Build range filtering and validation
   - Complex platform detection for different architectures
+  - Supports excluding specific commits from build lists (excludeCommits parameter)
 
 ### `src/launcher.ts`
 - **Purpose**: Runtime-specific launching of VSCode builds
@@ -134,6 +136,7 @@ This document serves as a quick reference for understanding what each important 
   - Tests both Stable and Insider quality builds
   - Includes platform-specific flavor testing (Default, CLI, Universal for macOS)
   - Validates both released-only and unreleased build filtering
+  - Tests exclude commits functionality to ensure excluded commits are properly filtered
   - Requires network access for VSCode build API integration
 
 ## Documentation Files
