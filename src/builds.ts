@@ -40,7 +40,7 @@ class Builds {
         return { runtime, commit: meta.version, quality, flavor };
     }
 
-    async fetchBuilds({ runtime, quality, flavor }: IBuildKind, goodCommit?: string, badCommit?: string, releasedOnly?: boolean): Promise<IBuild[]> {
+    async fetchBuilds({ runtime, quality, flavor }: IBuildKind, goodCommit?: string, badCommit?: string, releasedOnly?: boolean, excludeCommits?: string[]): Promise<IBuild[]> {
 
         // Fetch all released builds
         const allBuilds = await this.fetchAllBuilds({ runtime, quality, flavor }, releasedOnly);
@@ -54,7 +54,7 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided good commit ${chalk.green(goodCommit)} was not found in the list of builds. It is either invalid or too old.`);
                 } else {
-                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true);
+                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true, excludeCommits);
                 }
             }
 
@@ -67,7 +67,7 @@ class Builds {
                 if (releasedOnly) {
                     throw new Error(`Provided bad commit ${chalk.green(badCommit)} was not found in the list of builds. It is either invalid or too old.`);
                 } else {
-                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true);
+                    return this.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, true, excludeCommits);
                 }
             }
 
@@ -79,7 +79,19 @@ class Builds {
         }
 
         // Build a range based on the bad and good commits if any
-        const buildsInRange = allBuilds.slice(badCommitIndex, goodCommitIndex + 1);
+        let buildsInRange = allBuilds.slice(badCommitIndex, goodCommitIndex + 1);
+
+        // Filter out excluded commits if any
+        if (excludeCommits && excludeCommits.length > 0) {
+            const excludeSet = new Set(excludeCommits);
+            const originalLength = buildsInRange.length;
+            buildsInRange = buildsInRange.filter(build => !excludeSet.has(build.commit));
+
+            if (buildsInRange.length !== originalLength) {
+                const excludedCount = originalLength - buildsInRange.length;
+                LOGGER.log(`${chalk.gray('[build]')} excluded ${chalk.green(excludedCount)} commit${excludedCount === 1 ? '' : 's'} from bisecting`);
+            }
+        }
 
         // Drop those builds that are not on main branch
         return buildsInRange;

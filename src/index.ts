@@ -29,6 +29,7 @@ export default async function main(argv: string[]): Promise<void> {
             flavor?: string;
             good?: string;
             bad?: string;
+            exclude?: string[];
             releasedOnly?: boolean;
             sanity?: boolean;
             verbose?: boolean;
@@ -47,6 +48,7 @@ export default async function main(argv: string[]): Promise<void> {
             .addOption(new Option('-f, --flavor <flavor>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system', 'linux-deb', 'linux-rpm', 'linux-snap', 'cli-linux-amd64', 'cli-linux-arm64', 'cli-linux-armv7', 'cli-alpine-amd64', 'cli-alpine-arm64']))
             .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
             .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
+            .option('--exclude <commits...>', 'commit hashes to exclude from bisecting (can be specified multiple times)')
             .option('--releasedOnly', 'only bisect over released builds to support older builds')
             .option('--reset', 'deletes the cache folder (use only for troubleshooting)')
             .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
@@ -180,7 +182,7 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
 
         // No commit provided: bisect commit ranges
         else {
-            await bisecter.start(buildKind, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly);
+            await bisecter.start(buildKind, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly, opts.exclude);
         }
     } catch (error) {
         LOGGER.log(`${chalk.red('\n[error]')} ${error}`);

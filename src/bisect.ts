@@ -25,13 +25,13 @@ interface IBisectState {
 
 class Bisecter {
 
-    async start({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean): Promise<void> {
+    async start({ runtime, quality, flavor }: IBuildKind, goodCommitOrVersion?: string, badCommitOrVersion?: string, releasedOnly?: boolean, excludeCommits?: string[]): Promise<void> {
 
         // Resolve commits from input
         const { goodCommit, badCommit } = await this.resolveCommits({ runtime, quality, flavor }, goodCommitOrVersion, badCommitOrVersion);
 
         // Get builds to bisect
-        const buildsRange = await builds.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly);
+        const buildsRange = await builds.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly, excludeCommits);
 
         LOGGER.log(`${chalk.gray('[build]')} total ${chalk.green(buildsRange.length)} builds with roughly ${chalk.green(Math.round(Math.log2(buildsRange.length)))} steps`);
 

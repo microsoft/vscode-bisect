@@ -67,4 +67,28 @@ describe('Integration tests', () => {
             assert.ok(result.length > 0, `Expected all builds to be fetched for build ${buildKindToString(kind)}`);
         });
     }
+
+    test('exclude commits functionality', async () => {
+        const kind = buildKinds[0]; // Use first build kind for testing
+
+        // Fetch builds without exclusions
+        const allBuilds = await builds.fetchBuilds(kind, undefined, undefined, true /* released only */);
+        assert.ok(allBuilds.length >= 3, 'Expected at least 3 builds for exclude testing');
+
+        // Take the first 2 commit hashes to exclude
+        const excludeCommits = [allBuilds[1].commit, allBuilds[2].commit];
+
+        // Fetch builds with exclusions
+        const filteredBuilds = await builds.fetchBuilds(kind, undefined, undefined, true /* released only */, excludeCommits);
+
+        // Verify the excluded commits are not in the result
+        const filteredCommits = new Set(filteredBuilds.map(b => b.commit));
+        for (const excludedCommit of excludeCommits) {
+            assert.ok(!filteredCommits.has(excludedCommit), `Expected excluded commit ${excludedCommit} to not be in filtered builds`);
+        }
+
+        // Verify we have fewer builds than before
+        assert.ok(filteredBuilds.length < allBuilds.length, 'Expected filtered builds to have fewer items than all builds');
+        assert.ok(filteredBuilds.length === allBuilds.length - excludeCommits.length, 'Expected exactly 2 fewer builds after excluding 2 commits');
+    });
 });
