@@ -85,11 +85,19 @@ class Builds {
         if (excludeCommits && excludeCommits.length > 0) {
             const excludeSet = new Set(excludeCommits);
             const originalLength = buildsInRange.length;
+            const excludedFromRange = buildsInRange.filter(build => excludeSet.has(build.commit));
             buildsInRange = buildsInRange.filter(build => !excludeSet.has(build.commit));
 
-            if (buildsInRange.length !== originalLength) {
-                const excludedCount = originalLength - buildsInRange.length;
-                LOGGER.log(`${chalk.gray('[build]')} excluded ${chalk.green(excludedCount)} commit${excludedCount === 1 ? '' : 's'} from bisecting`);
+            if (excludedFromRange.length > 0) {
+                const excludedCount = excludedFromRange.length;
+                LOGGER.log(`${chalk.gray('[build]')} excluded ${chalk.green(excludedCount)} commit${excludedCount === 1 ? '' : 's'} from bisecting (${excludedFromRange.map(b => b.commit.substring(0, 7)).join(', ')})`);
+            }
+            
+            // Log if some excluded commits were not found in the current bisect range
+            const excludedCommitsInRange = new Set(excludedFromRange.map(b => b.commit));
+            const notInRange = excludeCommits.filter(commit => !excludedCommitsInRange.has(commit));
+            if (notInRange.length > 0) {
+                LOGGER.log(`${chalk.gray('[build]')} note: ${notInRange.length} excluded commit${notInRange.length === 1 ? '' : 's'} not found in bisect range (${notInRange.map(c => c.substring(0, 7)).join(', ')})`);
             }
         }
 
