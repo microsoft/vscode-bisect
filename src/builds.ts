@@ -101,6 +101,15 @@ class Builds {
             }
         }
 
+        // Validate we have enough commits left to bisect
+        if (buildsInRange.length < 2) {
+            if (excludeCommits && excludeCommits.length > 0) {
+                throw new Error(`After excluding commits, only ${buildsInRange.length} commit${buildsInRange.length === 1 ? '' : 's'} remain${buildsInRange.length === 1 ? 's' : ''} in the bisect range. At least 2 commits are required for bisecting. Consider reducing the number of excluded commits or expanding the bisect range.`);
+            } else {
+                throw new Error(`Only ${buildsInRange.length} commit${buildsInRange.length === 1 ? '' : 's'} found in the bisect range. At least 2 commits are required for bisecting.`);
+            }
+        }
+
         // Drop those builds that are not on main branch
         return buildsInRange;
     }

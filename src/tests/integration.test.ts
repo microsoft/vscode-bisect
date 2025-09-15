@@ -91,4 +91,24 @@ describe('Integration tests', () => {
         assert.ok(filteredBuilds.length < allBuilds.length, 'Expected filtered builds to have fewer items than all builds');
         assert.ok(filteredBuilds.length === allBuilds.length - excludeCommits.length, 'Expected exactly 2 fewer builds after excluding 2 commits');
     });
+
+    test('exclude too many commits should throw error', async () => {
+        const kind = buildKinds[0]; // Use first build kind for testing
+
+        // Fetch builds to get real commit hashes
+        const allBuilds = await builds.fetchBuilds(kind, undefined, undefined, true /* released only */);
+        assert.ok(allBuilds.length >= 3, 'Expected at least 3 builds for testing');
+
+        // Try to exclude all but one commit
+        const excludeCommits = allBuilds.slice(1).map(build => build.commit);
+
+        // This should throw an error because it leaves less than 2 commits
+        await assert.rejects(
+            async () => {
+                await builds.fetchBuilds(kind, undefined, undefined, true /* released only */, excludeCommits);
+            },
+            /After excluding commits, only \d+ commit/,
+            'Expected error when excluding too many commits'
+        );
+    });
 });

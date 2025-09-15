@@ -182,11 +182,25 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
 
         // No commit provided: bisect commit ranges
         else {
+            // Validate exclude commit hashes if provided
+            if (opts.exclude && opts.exclude.length > 0) {
+                validateCommitHashes(opts.exclude);
+            }
+            
             await bisecter.start(buildKind, goodCommitOrVersion, badCommitOrVersion, opts.releasedOnly, opts.exclude);
         }
     } catch (error) {
         LOGGER.log(`${chalk.red('\n[error]')} ${error}`);
         logTroubleshoot();
         process.exit(1);
+    }
+}
+
+function validateCommitHashes(commits: string[]): void {
+    for (const commit of commits) {
+        // Check if commit is a valid 40-character hex string or a shorter abbreviated hash (4-40 chars)
+        if (!/^[a-f0-9]{4,40}$/i.test(commit)) {
+            throw new Error(`Invalid commit hash format: ${chalk.green(commit)}. Expected a hexadecimal string of 4-40 characters.`);
+        }
     }
 }
