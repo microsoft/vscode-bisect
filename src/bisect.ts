@@ -30,6 +30,14 @@ class Bisecter {
         // Resolve commits from input
         const { goodCommit, badCommit } = await this.resolveCommits({ runtime, quality, flavor }, goodCommitOrVersion, badCommitOrVersion);
 
+        // Keep track of dynamically excluded commits
+        const dynamicExcludes = new Set<string>(excludeCommits || []);
+        
+        return this.runBisect({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly, Array.from(dynamicExcludes));
+    }
+
+    private async runBisect({ runtime, quality, flavor }: IBuildKind, goodCommit?: string, badCommit?: string, releasedOnly?: boolean, excludeCommits?: string[]): Promise<void> {
+
         // Get builds to bisect
         const buildsRange = await builds.fetchBuilds({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly, excludeCommits);
 
@@ -51,19 +59,32 @@ class Bisecter {
 
         // Go over next builds for as long as we are not done...
         while (build = buildsRange[state.currentIndex]) {
-            const response = await this.tryBuild(build, { isBisecting: true, forceReDownload: false });
-            if (response === BisectResponse.Bad) {
-                badBuild = build;
-            } else if (response === BisectResponse.Good) {
-                goodBuild = build;
-            } else {
-                quit = true;
-                break;
-            }
+            try {
+                const response = await this.tryBuild(build, { isBisecting: true, forceReDownload: false });
+                if (response === BisectResponse.Bad) {
+                    badBuild = build;
+                } else if (response === BisectResponse.Good) {
+                    goodBuild = build;
+                } else {
+                    quit = true;
+                    break;
+                }
 
-            const finished = this.nextState(state, response);
-            if (finished) {
-                break;
+                const finished = this.nextState(state, response);
+                if (finished) {
+                    break;
+                }
+            } catch (error) {
+                // Handle dynamic exclusion
+                if (error instanceof Error && error.message.startsWith('EXCLUDE_COMMIT:')) {
+                    const excludedCommit = error.message.replace('EXCLUDE_COMMIT:', '');
+                    LOGGER.log(`${chalk.gray('[build]')} excluding commit ${chalk.green(excludedCommit.substring(0, 7))} and restarting bisect...`);
+                    
+                    const newExcludes = [...(excludeCommits || []), excludedCommit];
+                    return this.runBisect({ runtime, quality, flavor }, goodCommit, badCommit, releasedOnly, newExcludes);
+                } else {
+                    throw error;
+                }
             }
         }
 
@@ -225,6 +246,11 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
 
             logTroubleshoot();
 
+            if (response.status === 'exclude') {
+                // Add this commit to a temporary exclude list and signal that we should skip it
+                throw new Error(`EXCLUDE_COMMIT:${build.commit}`);
+            }
+
             return BisectResponse.Quit;
         }
     }
@@ -244,6 +270,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         choices.push({ title: 'Yes (fresh user data dir)', value: 'retry-fresh' });
                     }
 
+                    choices.push({ title: 'Exclude commit and continue bisecting', value: 'exclude' });
                     choices.push({ title: 'No', value: 'no' });
 
                     return choices;
