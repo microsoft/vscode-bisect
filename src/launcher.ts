@@ -121,17 +121,17 @@ class Launcher {
         let executeArgs: string[] | undefined = undefined;
         switch (flavor) {
             case Flavor.LinuxDeb:
-                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo dpkg -r ${quality !== 'insider' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
+                executeCommand = quality !== 'insider' ? 'code' : 'code-insiders';
                 break;
             case Flavor.LinuxRPM:
-                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo rpm -e ${quality !== 'insider' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
+                executeCommand = quality !== 'insider' ? 'code' : 'code-insiders';
                 break;
             case Flavor.LinuxSnap:
-                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
+                installCommand = `sudo snap remove ${quality !== 'insider' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
                 executeCommand = 'snap';
-                executeArgs = ['run', quality === 'stable' ? 'code' : 'code-insiders'];
+                executeArgs = ['run', quality !== 'insider' ? 'code' : 'code-insiders'];
                 break;
         }
 
