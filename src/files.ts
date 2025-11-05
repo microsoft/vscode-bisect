@@ -9,7 +9,7 @@ import { mkdirSync, promises, readFileSync, rmSync, writeFileSync } from 'node:f
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { unzipSync } from 'fflate';
-import { BUILD_FOLDER, Flavor, LOGGER, Platform, platform, Quality, USER_DATA_FOLDER } from './constants.js';
+import { BUILD_FOLDER, Flavor, LOGGER, Platform, platform, Quality, USER_DATA_FOLDER, EXTENSIONS_FOLDER } from './constants.js';
 
 export async function exists(path: string): Promise<boolean> {
     try {
@@ -52,7 +52,7 @@ export async function unzip(source: string, destination: string): Promise<void> 
 
         // Windows
         if (platform === Platform.WindowsX64 || platform === Platform.WindowsArm) {
-            const unzipped = unzipSync(readFileSync(source));
+            const unzipped = unzipSync(new Uint8Array(readFileSync(source)));
             for (const entry of Object.keys(unzipped)) {
                 if (entry.endsWith('/')) {
                     mkdirSync(join(destination, entry), { recursive: true });
@@ -81,13 +81,14 @@ export async function unzip(source: string, destination: string): Promise<void> 
 export async function computeSHA256(path: string): Promise<string> {
     const fileBuffer = await promises.readFile(path);
 
-    return createHash('sha256').update(fileBuffer).digest('hex');
+    return createHash('sha256').update(new Uint8Array(fileBuffer)).digest('hex');
 }
 
 export function cleanUserDataDir(): void {
     try {
-        LOGGER.log(`${chalk.gray('[build]')} cleaning user data directory...`);
+        LOGGER.log(`${chalk.gray('[build]')} cleaning user data & extensions directory...`);
         rmSync(USER_DATA_FOLDER, { recursive: true });
+        rmSync(EXTENSIONS_FOLDER, { recursive: true });
     } catch (error) {
         // Ignore errors if directory doesn't exist
     }

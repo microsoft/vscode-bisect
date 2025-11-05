@@ -186,7 +186,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                         ];
 
                         if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
-                            choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
+                            choices.push({ title: 'Retry (fresh user data & extensions dir)', value: 'retry-fresh' });
                         }
 
                         choices.push({ title: 'Quit', value: 'quit' });
@@ -241,7 +241,7 @@ ${chalk.green(`git bisect start && git bisect bad ${badBuild.commit} && git bise
                     ];
 
                     if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
-                        choices.push({ title: 'Yes (fresh user data dir)', value: 'retry-fresh' });
+                        choices.push({ title: 'Yes (fresh user data & extensions dir)', value: 'retry-fresh' });
                     }
 
                     choices.push({ title: 'No', value: 'no' });
