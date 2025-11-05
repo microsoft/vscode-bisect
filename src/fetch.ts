@@ -9,6 +9,8 @@ import { dirname } from 'node:path';
 import { OutgoingHttpHeaders } from 'node:http';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
+import EasyDl from 'easydl';
+import { LOGGER } from './constants.js';
 
 const https = followRedirects.https;
 
@@ -34,36 +36,34 @@ export async function fileGet(url: string, path: string): Promise<void> {
     // Ensure parent folder exists
     await promises.mkdir(dirname(path), { recursive: true });
 
-    // Download
-    return new Promise((resolve, reject) => {
-        const request = https.get(url, res => {
-            if (res.statusCode !== 200) {
-                reject(`Failed to download file from update server (code: ${res.statusCode}, message: ${res.statusMessage})`);
-                return;
-            }
+    try {
+        const res = new EasyDl(url, path, { reportInterval: 250 });
 
-            const totalSize = parseInt(res.headers['content-length']!, 10);
+        const metadata = await res.metadata();
+        const totalSize = parseInt(metadata.headers?.['content-length']!, 10);
 
-            const bar = new ProgressBar(`${chalk.gray('[fetch]')} [:bar] :percent of ${(totalSize / 1024 / 1024).toFixed(2)} MB (:rate MB/s)`, {
-                complete: '▰',
-                incomplete: '▱',
-                width: 30,
-                total: totalSize / (1024 * 1024),
-                clear: true
-            });
-
-            const outStream = createWriteStream(path);
-            outStream.on('close', () => resolve());
-            outStream.on('error', reject);
-
-            res.on('data', chunk => {
-                bar.tick(chunk.length / (1024 * 1024));
-            });
-
-            res.on('error', reject);
-            res.pipe(outStream);
+        const bar = new ProgressBar(`${chalk.gray('[fetch]')} [:bar] :percent of ${(totalSize / 1024 / 1024).toFixed(2)} MB (:rate MB/s)`, {
+            complete: '▰',
+            incomplete: '▱',
+            width: 30,
+            total: totalSize / (1024 * 1024),
+            clear: true
         });
 
-        request.on('error', reject);
-    });
+        let totalDownloaded = 0;
+        res.on('progress', report => {
+            const downloadIncrement = report.total.bytes! - totalDownloaded;
+            totalDownloaded = report.total.bytes!;
+            bar.tick(downloadIncrement / (1024 * 1024));
+        });
+
+        res.on('error', err => LOGGER.trace(`${chalk.gray('[fetch]')} download error: ${err}`));
+
+        const result = await res.wait();
+        if (!result) {
+            throw new Error('Unknown error');
+        }
+    } catch (error) {
+        throw new Error(`Failed to download file from update server: ${error}`);
+    }
 }

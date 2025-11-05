@@ -1,6 +1,6 @@
 {
     "name": "@vscode/vscode-bisect",
-    "version": "1.0.13",
+    "version": "1.0.14",
     "description": "Bisect released VS Code builds to find bugs or performance issues similar to what git bisect supports.",
     "repository": {
         "type": "git",
@@ -28,22 +28,23 @@
         "node": ">= 20"
     },
     "dependencies": {
-        "@vscode/vscode-perf": "^0.0.22",
-        "chalk": "^5.x",
-        "clipboardy": "^4.0.0",
-        "commander": "^14.x",
+        "@vscode/vscode-perf": "^0.0.24",
+        "chalk": "^5.6.2",
+        "clipboardy": "^5.0.0",
+        "commander": "^14.0.2",
         "fflate": "^0.8.2",
-        "follow-redirects": "^1.15.9",
-        "open": "^10.x",
+        "follow-redirects": "^1.15.11",
+        "open": "^10.2.0",
         "progress": "^2.0.3",
         "prompts": "^2.4.2",
         "simple-git": "^3.16.0",
         "tree-kill": "^1.2.2",
-        "vscode-uri": "^3.x"
+        "vscode-uri": "^3.x",
+        "easydl": "1.2.0"
     },
     "devDependencies": {
         "@types/follow-redirects": "^1.x",
-        "@types/node": "20.x",
+        "@types/node": "22.x",
         "@types/progress": "^2.x",
         "@types/prompts": "^2.x",
         "typescript": "5.x"

@@ -160,7 +160,7 @@ class Sanity {
                         ];
 
                         if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
-                            choices.push({ title: 'Retry (fresh user data dir)', value: 'retry-fresh' });
+                            choices.push({ title: 'Retry (fresh user data & extensions dir)', value: 'retry-fresh' });
                         }
 
                         if (!options.isLast) {
@@ -199,7 +199,7 @@ class Sanity {
                         ];
 
                         if (build.runtime === Runtime.DesktopLocal && (build.flavor === Flavor.Default || build.flavor === Flavor.DarwinUniversal)) {
-                            choices.push({ title: 'Yes (fresh user data dir)', value: 'retry-fresh' });
+                            choices.push({ title: 'Yes (fresh user data & extensions dir)', value: 'retry-fresh' });
                         }
 
                         choices.push({ title: 'No', value: 'no' });
