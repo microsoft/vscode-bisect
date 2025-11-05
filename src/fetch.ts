@@ -9,12 +9,8 @@ import { dirname } from 'node:path';
 import { OutgoingHttpHeaders } from 'node:http';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
-import module from 'module';
 import EasyDl from 'easydl';
 import { LOGGER } from './constants.js';
-
-const require = module.createRequire(import.meta.url);
-const easydl = require('easydl');
 
 const https = followRedirects.https;
 
@@ -41,7 +37,7 @@ export async function fileGet(url: string, path: string): Promise<void> {
     await promises.mkdir(dirname(path), { recursive: true });
 
     try {
-        const res: EasyDl = new easydl(url, path, { reportInterval: 250 });
+        const res = new EasyDl(url, path, { reportInterval: 250 });
 
         const metadata = await res.metadata();
         const totalSize = parseInt(metadata.headers?.['content-length']!, 10);
