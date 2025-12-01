@@ -38,7 +38,10 @@ export default async function main(argv: string[]): Promise<void> {
             token?: string;
         }
 
-        program.addHelpText('beforeAll', `Version: ${chalk.green(require('../package.json').version)}\n`);
+        const version = require('../package.json').version;
+        program
+            .version(version, '-V, --cli-version', 'output the CLI version')
+            .addHelpText('beforeAll', `Version: ${chalk.green(version)}\n`);
 
         program
             .addOption(new Option('-r, --runtime <desktop|web|vscode.dev>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
