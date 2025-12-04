@@ -41,11 +41,12 @@ export function fibonacci(n: number): number {
 }
 
 /**
- * Generates an array of Fibonacci numbers up to and including the nth number.
+ * Generates an array of Fibonacci numbers from index 0 to n (inclusive).
+ * Uses an efficient O(n) iterative approach.
  * 
- * @param n - The number of Fibonacci numbers to generate
- * @returns An array of Fibonacci numbers from index 0 to n
- * @throws Error if n is negative
+ * @param n - The highest index to include in the sequence (0-based)
+ * @returns An array of Fibonacci numbers from index 0 to n (inclusive)
+ * @throws Error if n is negative or not an integer
  */
 export function fibonacciSequence(n: number): number[] {
     if (n < 0) {
@@ -56,10 +57,14 @@ export function fibonacciSequence(n: number): number[] {
         throw new Error('Fibonacci sequence is only defined for integer values');
     }
 
-    const sequence: number[] = [];
+    if (n === 0) {
+        return [0];
+    }
 
-    for (let i = 0; i <= n; i++) {
-        sequence.push(fibonacci(i));
+    const sequence: number[] = [0, 1];
+
+    for (let i = 2; i <= n; i++) {
+        sequence.push(sequence[i - 1] + sequence[i - 2]);
     }
 
     return sequence;
