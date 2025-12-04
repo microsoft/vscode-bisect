@@ -124,6 +124,15 @@ This document serves as a quick reference for understanding what each important 
   - In-memory caching with disk persistence
   - Type-safe getValue/store methods
 
+### `src/fibonacci.ts`
+- **Purpose**: Fibonacci number calculation utilities
+- **Key Details**:
+  - Exports `fibonacci(n)` function to calculate the nth Fibonacci number
+  - Exports `fibonacciSequence(n)` function to generate array of Fibonacci numbers from 0 to n
+  - Uses iterative algorithm for efficiency
+  - Includes input validation (throws errors for negative numbers and non-integers)
+  - 0-indexed: fibonacci(0) = 0, fibonacci(1) = 1, fibonacci(2) = 1, etc.
+
 ## Test Files
 
 ### `src/tests/integration.test.ts`
@@ -138,6 +147,15 @@ This document serves as a quick reference for understanding what each important 
   - Validates both released-only and unreleased build filtering
   - Tests exclude commits functionality to ensure excluded commits are properly filtered
   - Requires network access for VSCode build API integration
+
+### `src/tests/fibonacci.test.ts`
+- **Purpose**: Unit tests for Fibonacci calculation functions
+- **Key Details**:
+  - Uses Node.js built-in test runner with describe/test functions
+  - Tests `fibonacci()` function with base cases (0, 1), small and large indices
+  - Tests `fibonacciSequence()` function for correct sequence generation
+  - Validates error handling for negative numbers and non-integer inputs
+  - Does not require network access (pure unit tests)
 
 ## Documentation Files
 
