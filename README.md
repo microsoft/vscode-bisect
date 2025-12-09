@@ -22,3 +22,7 @@ npx @vscode/vscode-bisect --help
 ```
 
 `@vscode/vscode-bisect` is meant to be only used as a command line tool.
+
+## Contributors
+
+- bpasero
