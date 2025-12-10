@@ -25,7 +25,7 @@ export default async function main(argv: string[]): Promise<void> {
             runtime?: 'web' | 'desktop' | 'vscode.dev';
             commit?: string;
             version?: string;
-            quality?: 'insider' | 'stable';
+            quality?: 'insider' | 'stable' | 'exploration';
             flavor?: string;
             good?: string;
             bad?: string;
@@ -44,7 +44,7 @@ export default async function main(argv: string[]): Promise<void> {
             .addOption(new Option('-r, --runtime <desktop|web|vscode.dev>', 'whether to bisect with a local web, online vscode.dev or local desktop (default) version').choices(['desktop', 'web', 'vscode.dev']))
             .option('-c, --commit <commit|latest>', 'commit hash of a published build to test or "latest" released build (supercedes -g and -b)')
             .option('-v, --version <major.minor>', 'version of a published build to test, for example 1.93 (supercedes -g, -b and -c)')
-            .addOption(new Option('-q, --quality <insider|stable>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable']))
+            .addOption(new Option('-q, --quality <insider|stable|exploration>', 'quality of a published build to test, defaults to "insider"').choices(['insider', 'stable', 'exploration']))
             .addOption(new Option('-f, --flavor <flavor>', 'flavor of a published build to test (only applies when testing desktop builds)').choices(['universal', 'cli', 'win32-user', 'win32-system', 'linux-deb', 'linux-rpm', 'linux-snap', 'cli-linux-amd64', 'cli-linux-arm64', 'cli-linux-armv7', 'cli-alpine-amd64', 'cli-alpine-arm64']))
             .option('-g, --good <commit|version>', 'commit hash or version of a published build that does not reproduce the issue')
             .option('-b, --bad <commit|version>', 'commit hash or version of a published build that reproduces the issue')
