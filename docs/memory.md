@@ -84,6 +84,7 @@ This document serves as a quick reference for understanding what each important 
   - Defines all temp directory paths (`/tmp/vscode-bisect/`)
   - Platform enumeration (Windows, macOS, Linux with x64/ARM variants)
   - Runtime type definitions (Desktop, Web Local, Web Remote)
+  - Quality enum supporting Stable, Insider, and Exploration builds
   - Performance testing configuration
   - VSCode.dev URL construction
   - Global configuration object (CONFIG)
