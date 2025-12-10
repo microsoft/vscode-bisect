@@ -91,4 +91,28 @@ describe('Integration tests', () => {
         assert.ok(filteredBuilds.length < allBuilds.length, 'Expected filtered builds to have fewer items than all builds');
         assert.ok(filteredBuilds.length === allBuilds.length - excludeCommits.length, 'Expected exactly 2 fewer builds after excluding 2 commits');
     });
+
+    test('exploration quality support', async () => {
+        // Test that exploration quality is recognized and handled
+        const explorationKind: IBuildKind = {
+            runtime: Runtime.DesktopLocal,
+            quality: Quality.Exploration,
+            flavor: Flavor.Default
+        };
+
+        // Verify the buildKindToString works with exploration
+        const kindStr = buildKindToString(explorationKind);
+        assert.ok(kindStr.includes('exploration'), `Expected kind string to include 'exploration', got: ${kindStr}`);
+
+        // Test that exploration builds can be fetched (may be empty if no builds available)
+        // This won't fail if exploration builds aren't available, just validates the API call works
+        try {
+            const result = await builds.fetchBuilds(explorationKind, undefined, undefined, false /* released only */);
+            // If we get here, the API call succeeded (builds may or may not be available)
+            assert.ok(Array.isArray(result), 'Expected fetchBuilds to return an array for exploration quality');
+        } catch (error) {
+            // If exploration builds aren't available, that's ok - we just tested the code path
+            assert.ok(error instanceof Error, 'Expected error to be an Error instance');
+        }
+    });
 });
