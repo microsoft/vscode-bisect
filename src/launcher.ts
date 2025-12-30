@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import { mkdirSync, rmSync } from 'node:fs';
 import clipboard from 'clipboardy';
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';

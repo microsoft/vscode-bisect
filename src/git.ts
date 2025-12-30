@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import chalk from 'chalk';
 import { mkdirSync } from 'node:fs';
 import simpleGit from 'simple-git';

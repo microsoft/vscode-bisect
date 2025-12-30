@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import followRedirects from 'follow-redirects';
 import { createWriteStream, promises } from 'node:fs';
 import { dirname } from 'node:path';

@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import chalk from 'chalk';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, promises, readFileSync, rmSync, writeFileSync } from 'node:fs';

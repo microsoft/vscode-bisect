@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import chalk from 'chalk';
 import { program, Option } from 'commander';
 import { rmSync, truncateSync } from 'node:fs';

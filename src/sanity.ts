@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import chalk from "chalk";
 import { IBuild } from "./builds.js";
 import { Arch, arch, Flavor, LOGGER, logTroubleshoot, Platform, platform, Quality, Runtime, USER_DATA_FOLDER } from "./constants.js";

@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// @author bpasero
+
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
