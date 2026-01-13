@@ -1,4 +1,7 @@
 # vscode-bisect
+
+**Author:** bpasero
+
 Allows to bisect released VSCode web and desktop builds for issues similar to what `git bisect` does.
 
 Provides additional options to test a specific build by commit hash supporting stable builds as well for sanity testing.
