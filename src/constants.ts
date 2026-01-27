@@ -10,7 +10,9 @@ import { join } from 'node:path';
 
 const require = createRequire(import.meta.url);
 
-export const ROOT = join(tmpdir(), 'vscode-bisect');
+// macOS has trouble launching signed app bundles from
+// tmpDir() after unzipping them, so we use /tmp instead. 
+export const ROOT = join(process.platform === 'darwin' ? '/tmp' : tmpdir(), 'vscode-perf');
 
 export const BUILD_FOLDER = join(ROOT, '.builds');
 
