@@ -285,7 +285,7 @@ class Builds {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
                     // Exploration builds use the same naming convention as insider builds
-                    return quality === 'stable' ? 'Visual Studio Code.app' : 'Visual Studio Code - Insiders.app';
+                    return quality === 'insider' || quality === 'exploration' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     return `VSCode-linux-${arch}`;
@@ -299,7 +299,7 @@ class Builds {
         }
 
         // CLI - exploration builds use the same executable name as insider builds
-        return quality === 'stable' ? 'code' : 'code-insiders';
+        return quality === 'insider' || quality === 'exploration' ? 'code-insiders' : 'code';
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -387,7 +387,7 @@ class Builds {
                     }
 
                     // Exploration builds use the same server executable name as insider builds
-                    return join(buildPath, buildName, 'bin', quality === 'stable' ? 'code-server' : 'code-server-insiders');
+                    return join(buildPath, buildName, 'bin', quality === 'insider' || quality === 'exploration' ? 'code-server-insiders' : 'code-server');
                 }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
@@ -397,7 +397,7 @@ class Builds {
                     }
 
                     // Exploration builds use the same server executable name as insider builds
-                    return join(buildPath, buildName, buildName, 'bin', quality === 'stable' ? 'code-server.cmd' : 'code-server-insiders.cmd');
+                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' || quality === 'exploration' ? 'code-server-insiders.cmd' : 'code-server.cmd');
                 }
             }
         }
@@ -411,11 +411,11 @@ class Builds {
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     // Exploration builds use the same executable name as insider builds
-                    return join(buildPath, buildName, quality === 'stable' ? 'code' : 'code-insiders')
+                    return join(buildPath, buildName, quality === 'insider' || quality === 'exploration' ? 'code-insiders' : 'code')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
                     // Exploration builds use the same executable name as insider builds
-                    return join(buildPath, buildName, quality === 'stable' ? 'Code.exe' : 'Code - Insiders.exe');
+                    return join(buildPath, buildName, quality === 'insider' || quality === 'exploration' ? 'Code - Insiders.exe' : 'Code.exe');
             }
         }
 
