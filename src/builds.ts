@@ -284,6 +284,7 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
+                    // Exploration builds use the same naming convention as insider builds
                     return quality === 'stable' ? 'Visual Studio Code.app' : 'Visual Studio Code - Insiders.app';
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
@@ -297,7 +298,7 @@ class Builds {
             }
         }
 
-        // CLI
+        // CLI - exploration builds use the same executable name as insider builds
         return quality === 'stable' ? 'code' : 'code-insiders';
     }
 
@@ -385,6 +386,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
+                    // Exploration builds use the same server executable name as insider builds
                     return join(buildPath, buildName, 'bin', quality === 'stable' ? 'code-server' : 'code-server-insiders');
                 }
                 case Platform.WindowsX64:
@@ -394,6 +396,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
+                    // Exploration builds use the same server executable name as insider builds
                     return join(buildPath, buildName, buildName, 'bin', quality === 'stable' ? 'code-server.cmd' : 'code-server-insiders.cmd');
                 }
             }
@@ -407,9 +410,11 @@ class Builds {
                     return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
+                    // Exploration builds use the same executable name as insider builds
                     return join(buildPath, buildName, quality === 'stable' ? 'code' : 'code-insiders')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
+                    // Exploration builds use the same executable name as insider builds
                     return join(buildPath, buildName, quality === 'stable' ? 'Code.exe' : 'Code - Insiders.exe');
             }
         }
