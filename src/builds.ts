@@ -33,6 +33,8 @@ class Builds {
         let meta;
         if (quality === 'insider') {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName({ runtime, quality, flavor })}/insider?released=true`);
+        } else if (quality === 'exploration') {
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-exploration/${this.getBuildApiName({ runtime, quality, flavor })}/exploration?released=true`);
         } else {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName({ runtime, quality, flavor })}/stable?released=true`);
         }
@@ -282,7 +284,7 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
+                    return quality === 'stable' ? 'Visual Studio Code.app' : 'Visual Studio Code - Insiders.app';
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     return `VSCode-linux-${arch}`;
@@ -296,7 +298,7 @@ class Builds {
         }
 
         // CLI
-        return quality === 'insider' ? 'code-insiders' : 'code';
+        return quality === 'stable' ? 'code' : 'code-insiders';
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -383,7 +385,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+                    return join(buildPath, buildName, 'bin', quality === 'stable' ? 'code-server' : 'code-server-insiders');
                 }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
@@ -392,7 +394,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                    return join(buildPath, buildName, buildName, 'bin', quality === 'stable' ? 'code-server.cmd' : 'code-server-insiders.cmd');
                 }
             }
         }
@@ -405,10 +407,10 @@ class Builds {
                     return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
+                    return join(buildPath, buildName, quality === 'stable' ? 'code' : 'code-insiders')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
+                    return join(buildPath, buildName, quality === 'stable' ? 'Code.exe' : 'Code - Insiders.exe');
             }
         }
 
