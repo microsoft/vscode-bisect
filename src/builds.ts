@@ -33,6 +33,8 @@ class Builds {
         let meta;
         if (quality === 'insider') {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName({ runtime, quality, flavor })}/insider?released=true`);
+        } else if (quality === 'exploration') {
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-exploration/${this.getBuildApiName({ runtime, quality, flavor })}/exploration?released=true`);
         } else {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName({ runtime, quality, flavor })}/stable?released=true`);
         }
@@ -282,7 +284,8 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
+                    // Exploration builds use the same naming convention as insider builds
+                    return quality === 'insider' || quality === 'exploration' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     return `VSCode-linux-${arch}`;
@@ -295,8 +298,8 @@ class Builds {
             }
         }
 
-        // CLI
-        return quality === 'insider' ? 'code-insiders' : 'code';
+        // CLI - exploration builds use the same executable name as insider builds
+        return quality === 'insider' || quality === 'exploration' ? 'code-insiders' : 'code';
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -383,7 +386,8 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+                    // Exploration builds use the same server executable name as insider builds
+                    return join(buildPath, buildName, 'bin', quality === 'insider' || quality === 'exploration' ? 'code-server-insiders' : 'code-server');
                 }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
@@ -392,7 +396,8 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                    // Exploration builds use the same server executable name as insider builds
+                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' || quality === 'exploration' ? 'code-server-insiders.cmd' : 'code-server.cmd');
                 }
             }
         }
@@ -410,10 +415,12 @@ class Builds {
                 }
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
+                    // Exploration builds use the same executable name as insider builds
+                    return join(buildPath, buildName, quality === 'insider' || quality === 'exploration' ? 'code-insiders' : 'code')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
+                    // Exploration builds use the same executable name as insider builds
+                    return join(buildPath, buildName, quality === 'insider' || quality === 'exploration' ? 'Code - Insiders.exe' : 'Code.exe');
             }
         }
 
