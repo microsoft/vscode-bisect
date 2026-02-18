@@ -192,7 +192,7 @@ class Launcher {
 
     private getWindowsVSCodeExecutablePath(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality): string {
         const isUserInstaller = flavor === Flavor.WindowsUserInstaller;
-        const isInsiders = quality === Quality.Insider;
+        const isStable = quality === Quality.Stable;
 
         // Determine base directory
         let baseDir: string;
@@ -208,12 +208,12 @@ class Launcher {
 
         let appFolder: string;
         let executableName: string;
-        if (isInsiders) {
-            appFolder = 'Microsoft VS Code Insiders';
-            executableName = 'code-insiders.cmd';
-        } else {
+        if (isStable) {
             appFolder = 'Microsoft VS Code';
             executableName = 'code.cmd';
+        } else {
+            appFolder = 'Microsoft VS Code Insiders';
+            executableName = 'code-insiders.cmd';
         }
 
         return join(baseDir, appFolder, 'bin', executableName);
@@ -392,7 +392,7 @@ class Launcher {
 
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
-        const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
+        const quality = build.quality === Quality.Stable ? 'stable' : build.quality === Quality.Exploration ? 'exploration' : 'insider';
 
         await this.setupDockerBinfmt();
 
