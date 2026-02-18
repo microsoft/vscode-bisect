@@ -402,11 +402,11 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm: {
-                    const oldLocation = join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
-                    if (await exists(oldLocation)) {
-                        return oldLocation; // only valid until 1.109
+                    const newLocation = join(buildPath, buildName, 'Contents', 'MacOS', quality === 'insider' ? 'Code - Insiders' : 'Code');
+                    if (await exists(newLocation)) {
+                        return newLocation; // valid from 1.110 onwards
                     }
-                    return join(buildPath, buildName, 'Contents', 'MacOS', quality === 'insider' ? 'Code - Insiders' : 'Code');
+                    return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 }
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:

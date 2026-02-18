@@ -64,7 +64,12 @@ export async function unzip(source: string, destination: string): Promise<void> 
 
         // macOS
         else {
-            spawnSync('unzip', [source, '-d', destination]);
+            const result = spawnSync('unzip', ['-qq', source, '-d', destination], {
+                maxBuffer: 10 * 1024 * 1024,
+            });
+            if (result.error || result.status !== 0) {
+                throw result.error ?? new Error(`unzip exited with code ${result.status}: ${result.stderr?.toString().trim()}`);
+            }
         }
     }
 
@@ -74,7 +79,12 @@ export async function unzip(source: string, destination: string): Promise<void> 
             await promises.mkdir(destination); // tar does not create extractDir by default
         }
 
-        spawnSync('tar', ['-xzf', source, '-C', destination]);
+        const result = spawnSync('tar', ['-xzf', source, '-C', destination], {
+            maxBuffer: 10 * 1024 * 1024,
+        });
+        if (result.error || result.status !== 0) {
+            throw result.error ?? new Error(`tar exited with code ${result.status}: ${result.stderr?.toString().trim()}`);
+        }
     }
 }
 
