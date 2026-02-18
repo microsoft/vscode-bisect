@@ -64,7 +64,7 @@ export async function unzip(source: string, destination: string): Promise<void> 
 
         // macOS
         else {
-            const result = spawnSync('unzip', [source, '-d', destination], {
+            const result = spawnSync('unzip', ['-qq', source, '-d', destination], {
                 maxBuffer: 10 * 1024 * 1024,
             });
             if (result.error || result.status !== 0) {
