@@ -101,7 +101,8 @@ export function runtimeFromString(value: unknown): Runtime {
 
 export enum Quality {
     Insider = 'insider',
-    Stable = 'stable'
+    Stable = 'stable',
+    Exploration = 'exploration'
 }
 
 export function qualityFromString(value: unknown): Quality {
@@ -110,6 +111,8 @@ export function qualityFromString(value: unknown): Quality {
             return Quality.Stable;
         case 'insider':
             return Quality.Insider;
+        case 'exploration':
+            return Quality.Exploration;
         default: {
             if (typeof value === 'string') {
                 throw new Error(`Unknown quality: ${value}`);
