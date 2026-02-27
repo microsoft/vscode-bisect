@@ -12,7 +12,8 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			}
+			},
+			"inSessions": true
 		}
 	]
 }
