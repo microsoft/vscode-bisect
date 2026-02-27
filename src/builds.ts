@@ -33,6 +33,8 @@ class Builds {
         let meta;
         if (quality === 'insider') {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName({ runtime, quality, flavor })}/insider?released=true`);
+        } else if (quality === 'exploration') {
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-exploration/${this.getBuildApiName({ runtime, quality, flavor })}/exploration?released=true`);
         } else {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName({ runtime, quality, flavor })}/stable?released=true`);
         }
@@ -282,7 +284,7 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
+                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : quality === 'exploration' ? 'Visual Studio Code - Exploration.app' : 'Visual Studio Code.app';
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     return `VSCode-linux-${arch}`;
@@ -296,7 +298,7 @@ class Builds {
         }
 
         // CLI
-        return quality === 'insider' ? 'code-insiders' : 'code';
+        return quality === 'insider' ? 'code-insiders' : quality === 'exploration' ? 'code-exploration' : 'code';
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -383,7 +385,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : quality === 'exploration' ? 'code-server-exploration' : 'code-server');
                 }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
@@ -392,7 +394,7 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : quality === 'exploration' ? 'code-server-exploration.cmd' : 'code-server.cmd');
                 }
             }
         }
@@ -402,7 +404,7 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm: {
-                    const newLocation = join(buildPath, buildName, 'Contents', 'MacOS', quality === 'insider' ? 'Code - Insiders' : 'Code');
+                    const newLocation = join(buildPath, buildName, 'Contents', 'MacOS', quality === 'insider' ? 'Code - Insiders' : quality === 'exploration' ? 'Code - Exploration' : 'Code');
                     if (await exists(newLocation)) {
                         return newLocation; // valid from 1.110 onwards
                     }
@@ -410,10 +412,10 @@ class Builds {
                 }
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
+                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : quality === 'exploration' ? 'code-exploration' : 'code')
                 case Platform.WindowsX64:
                 case Platform.WindowsArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
+                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : quality === 'exploration' ? 'Code - Exploration.exe' : 'Code.exe');
             }
         }
 
