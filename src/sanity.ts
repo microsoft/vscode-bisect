@@ -12,10 +12,9 @@ import { launcher } from "./launcher.js";
 
 class Sanity {
 
-    async testAllFlavors(commit: string): Promise<void> {
-        this.logWelcome();
+    async testAllFlavors(commit: string, quality = Quality.Stable): Promise<void> {
+        this.logWelcome(quality);
 
-        const quality = Quality.Stable;
         const runtime = Runtime.DesktopLocal;
 
         const useDocker = await this.promptUserForDocker();
@@ -124,7 +123,7 @@ class Sanity {
         ]);
 
         const selectedFlavors = [];
-        
+
         // Add the user's choice
         if (response.choice === 'deb') {
             selectedFlavors.push(Flavor.LinuxDeb);
@@ -224,22 +223,24 @@ class Sanity {
         }
     }
 
-    private logWelcome(): void {
+    private logWelcome(quality: Quality): void {
         console.clear();
+
+        const isExploration = quality === Quality.Insider;
 
         const banner = `
 ${chalk.green('╔══════════════════════════════════════════════════════════════╗')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
-${chalk.green('║')}    ${chalk.bold('VS Code Build Sanity Checker')}                              ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.bold(isExploration ? 'VS Code Insider Explorer' : 'VS Code Build Sanity Checker')}${isExploration ? '                                ' : '                              '}${chalk.green('║')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
-${chalk.green('║')}    ${chalk.gray('Sanity check flavors of VS Code Stable')}                    ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray(isExploration ? 'Explore flavors of VS Code Insider' : 'Sanity check flavors of VS Code Stable')}${isExploration ? '                      ' : '                    '}${chalk.green('║')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('How it works:')}                                             ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('• Run different program flavors step by step')}              ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('• Verify the program installs and runs as expected')}        ${chalk.green('║')}
 ${chalk.green('║')}    ${chalk.gray('• Continue to the next step')}                               ${chalk.green('║')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
-${chalk.green('║')}    ${chalk.gray('https://github.com/microsoft/vscode/wiki/Sanity-Check')}     ${chalk.green('║')}
+${chalk.green('║')}    ${chalk.gray(isExploration ? 'https://github.com/microsoft/vscode/wiki/Exploration' : 'https://github.com/microsoft/vscode/wiki/Sanity-Check')}${isExploration ? '    ' : '     '}${chalk.green('║')}
 ${chalk.green('║')}                                                              ${chalk.green('║')}
 ${chalk.green('╚══════════════════════════════════════════════════════════════╝')}
 `;
