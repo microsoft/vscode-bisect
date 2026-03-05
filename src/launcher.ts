@@ -121,17 +121,17 @@ class Launcher {
         let executeArgs: string[] | undefined = undefined;
         switch (flavor) {
             case Flavor.LinuxDeb:
-                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders'} && sudo dpkg -i ${path}`;
+                executeCommand = quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders';
                 break;
             case Flavor.LinuxRPM:
-                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders'} && sudo rpm -i ${path}`;
+                executeCommand = quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders';
                 break;
             case Flavor.LinuxSnap:
-                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
+                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
                 executeCommand = 'snap';
-                executeArgs = ['run', quality === 'stable' ? 'code' : 'code-insiders'];
+                executeArgs = ['run', quality === 'stable' ? 'code' : quality === 'exploration' ? 'code-exploration' : 'code-insiders'];
                 break;
         }
 
@@ -192,7 +192,6 @@ class Launcher {
 
     private getWindowsVSCodeExecutablePath(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality): string {
         const isUserInstaller = flavor === Flavor.WindowsUserInstaller;
-        const isInsiders = quality === Quality.Insider;
 
         // Determine base directory
         let baseDir: string;
@@ -208,9 +207,12 @@ class Launcher {
 
         let appFolder: string;
         let executableName: string;
-        if (isInsiders) {
+        if (quality === Quality.Insider) {
             appFolder = 'Microsoft VS Code Insiders';
             executableName = 'code-insiders.cmd';
+        } else if (quality === Quality.Exploration) {
+            appFolder = 'Microsoft VS Code Exploration';
+            executableName = 'code-exploration.cmd';
         } else {
             appFolder = 'Microsoft VS Code';
             executableName = 'code.cmd';
@@ -392,7 +394,7 @@ class Launcher {
 
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
-        const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
+        const quality = build.quality === Quality.Insider ? 'insider' : build.quality === Quality.Exploration ? 'exploration' : 'stable';
 
         await this.setupDockerBinfmt();
 

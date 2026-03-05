@@ -31,11 +31,12 @@ export const PERFORMANCE_RUNS = 10;
 export const PERFORMANCE_RUN_TIMEOUT = 60000;
 
 export const VSCODE_DEV_URL = function (commit: string, quality: Quality) {
+    const subdomain = quality === Quality.Insider ? 'insiders.' : quality === Quality.Exploration ? 'exploration.' : '';
     if (CONFIG.token) {
-        return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
+        return `https://${subdomain}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
     }
 
-    return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/?vscode-version=${commit}`;
+    return `https://${subdomain}vscode.dev/?vscode-version=${commit}`;
 }
 
 export enum Arch {
@@ -101,6 +102,7 @@ export function runtimeFromString(value: unknown): Runtime {
 
 export enum Quality {
     Insider = 'insider',
+    Exploration = 'exploration',
     Stable = 'stable'
 }
 
@@ -110,6 +112,8 @@ export function qualityFromString(value: unknown): Quality {
             return Quality.Stable;
         case 'insider':
             return Quality.Insider;
+        case 'exploration':
+            return Quality.Exploration;
         default: {
             if (typeof value === 'string') {
                 throw new Error(`Unknown quality: ${value}`);
