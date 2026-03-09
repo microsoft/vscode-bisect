@@ -32,6 +32,8 @@ export function getBuildPath(commit: string, quality: Quality, flavor: Flavor): 
     const prefixes: string[] = [];
     if (quality === Quality.Stable) {
         prefixes.push('stable');
+    } else if (quality === Quality.Exploration) {
+        prefixes.push('exploration');
     }
 
     if (flavor !== Flavor.Default) {

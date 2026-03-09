@@ -33,6 +33,8 @@ class Builds {
         let meta;
         if (quality === 'insider') {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-insider/${this.getBuildApiName({ runtime, quality, flavor })}/insider?released=true`);
+        } else if (quality === 'exploration') {
+            meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0-exploration/${this.getBuildApiName({ runtime, quality, flavor })}/exploration?released=true`);
         } else {
             meta = await jsonGet<IBuildMetadata>(`https://update.code.visualstudio.com/api/versions/${version}.0/${this.getBuildApiName({ runtime, quality, flavor })}/stable?released=true`);
         }
@@ -282,7 +284,13 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm:
-                    return quality === 'insider' ? 'Visual Studio Code - Insiders.app' : 'Visual Studio Code.app';
+                    if (quality === 'insider') {
+                        return 'Visual Studio Code - Insiders.app';
+                    } else if (quality === 'exploration') {
+                        return 'Visual Studio Code - Exploration.app';
+                    } else {
+                        return 'Visual Studio Code.app';
+                    }
                 case Platform.LinuxX64:
                 case Platform.LinuxArm:
                     return `VSCode-linux-${arch}`;
@@ -296,7 +304,13 @@ class Builds {
         }
 
         // CLI
-        return quality === 'insider' ? 'code-insiders' : 'code';
+        if (quality === 'insider') {
+            return 'code-insiders';
+        } else if (quality === 'exploration') {
+            return 'code-exploration';
+        } else {
+            return 'code';
+        }
     }
 
     private fetchBuildMeta({ runtime, commit, quality, flavor }: IBuild): Promise<IBuildMetadata> {
@@ -383,7 +397,15 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, 'bin', quality === 'insider' ? 'code-server-insiders' : 'code-server');
+                    let serverBinName: string;
+                    if (quality === 'insider') {
+                        serverBinName = 'code-server-insiders';
+                    } else if (quality === 'exploration') {
+                        serverBinName = 'code-server-exploration';
+                    } else {
+                        serverBinName = 'code-server';
+                    }
+                    return join(buildPath, buildName, 'bin', serverBinName);
                 }
                 case Platform.WindowsX64:
                 case Platform.WindowsArm: {
@@ -392,7 +414,15 @@ class Builds {
                         return oldLocation; // only valid until 1.64.x
                     }
 
-                    return join(buildPath, buildName, buildName, 'bin', quality === 'insider' ? 'code-server-insiders.cmd' : 'code-server.cmd');
+                    let serverBinName: string;
+                    if (quality === 'insider') {
+                        serverBinName = 'code-server-insiders.cmd';
+                    } else if (quality === 'exploration') {
+                        serverBinName = 'code-server-exploration.cmd';
+                    } else {
+                        serverBinName = 'code-server.cmd';
+                    }
+                    return join(buildPath, buildName, buildName, 'bin', serverBinName);
                 }
             }
         }
@@ -402,18 +432,44 @@ class Builds {
             switch (platform) {
                 case Platform.MacOSX64:
                 case Platform.MacOSArm: {
-                    const newLocation = join(buildPath, buildName, 'Contents', 'MacOS', quality === 'insider' ? 'Code - Insiders' : 'Code');
+                    let execName: string;
+                    if (quality === 'insider') {
+                        execName = 'Code - Insiders';
+                    } else if (quality === 'exploration') {
+                        execName = 'Code - Exploration';
+                    } else {
+                        execName = 'Code';
+                    }
+                    const newLocation = join(buildPath, buildName, 'Contents', 'MacOS', execName);
                     if (await exists(newLocation)) {
                         return newLocation; // valid from 1.110 onwards
                     }
                     return join(buildPath, buildName, 'Contents', 'MacOS', 'Electron');
                 }
                 case Platform.LinuxX64:
-                case Platform.LinuxArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'code-insiders' : 'code')
+                case Platform.LinuxArm: {
+                    let execName: string;
+                    if (quality === 'insider') {
+                        execName = 'code-insiders';
+                    } else if (quality === 'exploration') {
+                        execName = 'code-exploration';
+                    } else {
+                        execName = 'code';
+                    }
+                    return join(buildPath, buildName, execName);
+                }
                 case Platform.WindowsX64:
-                case Platform.WindowsArm:
-                    return join(buildPath, buildName, quality === 'insider' ? 'Code - Insiders.exe' : 'Code.exe');
+                case Platform.WindowsArm: {
+                    let execName: string;
+                    if (quality === 'insider') {
+                        execName = 'Code - Insiders.exe';
+                    } else if (quality === 'exploration') {
+                        execName = 'Code - Exploration.exe';
+                    } else {
+                        execName = 'Code.exe';
+                    }
+                    return join(buildPath, buildName, execName);
+                }
             }
         }
 
