@@ -16,7 +16,7 @@ import kill from 'tree-kill';
 import chalk from 'chalk';
 import * as perf from '@vscode/vscode-perf';
 import { builds, IBuild } from './builds.js';
-import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality, isDockerCliFlavor } from './constants.js';
+import { CONFIG, DATA_FOLDER, EXTENSIONS_FOLDER, GIT_VSCODE_FOLDER, LOGGER, DEFAULT_PERFORMANCE_FILE, Platform, platform, Runtime, USER_DATA_FOLDER, VSCODE_DEV_URL, Flavor, Quality, isDockerCliFlavor, qualityCommandSuffix, qualityDisplayLabel } from './constants.js';
 import { exists } from './files.js';
 
 export interface IInstance {
@@ -116,22 +116,23 @@ class Launcher {
     }
 
     private async runLinuxDesktopInstaller(quality: Quality, flavor: Flavor.LinuxDeb | Flavor.LinuxRPM | Flavor.LinuxSnap, path: string): Promise<IInstance | undefined> {
+        const commandName = `code${qualityCommandSuffix(quality)}`;
         let installCommand: string;
         let executeCommand: string;
         let executeArgs: string[] | undefined = undefined;
         switch (flavor) {
             case Flavor.LinuxDeb:
-                installCommand = `sudo dpkg -r ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo dpkg -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo dpkg -r ${commandName} && sudo dpkg -i ${path}`;
+                executeCommand = commandName;
                 break;
             case Flavor.LinuxRPM:
-                installCommand = `sudo rpm -e ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo rpm -i ${path}`;
-                executeCommand = quality === 'stable' ? 'code' : 'code-insiders';
+                installCommand = `sudo rpm -e ${commandName} && sudo rpm -i ${path}`;
+                executeCommand = commandName;
                 break;
             case Flavor.LinuxSnap:
-                installCommand = `sudo snap remove ${quality === 'stable' ? 'code' : 'code-insiders'} && sudo snap install ${path} --classic --dangerous`;
+                installCommand = `sudo snap remove ${commandName} && sudo snap install ${path} --classic --dangerous`;
                 executeCommand = 'snap';
-                executeArgs = ['run', quality === 'stable' ? 'code' : 'code-insiders'];
+                executeArgs = ['run', commandName];
                 break;
         }
 
@@ -192,7 +193,6 @@ class Launcher {
 
     private getWindowsVSCodeExecutablePath(flavor: Flavor.WindowsUserInstaller | Flavor.WindowsSystemInstaller, quality: Quality): string {
         const isUserInstaller = flavor === Flavor.WindowsUserInstaller;
-        const isInsiders = quality === Quality.Insider;
 
         // Determine base directory
         let baseDir: string;
@@ -206,15 +206,9 @@ class Launcher {
             baseDir = programFiles;
         }
 
-        let appFolder: string;
-        let executableName: string;
-        if (isInsiders) {
-            appFolder = 'Microsoft VS Code Insiders';
-            executableName = 'code-insiders.cmd';
-        } else {
-            appFolder = 'Microsoft VS Code';
-            executableName = 'code.cmd';
-        }
+        const label = qualityDisplayLabel(quality);
+        const appFolder = label ? `Microsoft VS Code ${label}` : 'Microsoft VS Code';
+        const executableName = `code${qualityCommandSuffix(quality)}.cmd`;
 
         return join(baseDir, appFolder, 'bin', executableName);
     }
@@ -392,7 +386,7 @@ class Launcher {
 
     private async launchDockerCLI(build: IBuild, flavor: Flavor.CliLinuxAmd64 | Flavor.CliLinuxArm64 | Flavor.CliLinuxArmv7 | Flavor.CliAlpineAmd64 | Flavor.CliAlpineArm64): Promise<IInstance> {
         const commit = build.commit;
-        const quality = build.quality === Quality.Insider ? 'insider' : 'stable';
+        const quality = build.quality;
 
         await this.setupDockerBinfmt();
 

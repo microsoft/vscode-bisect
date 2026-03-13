@@ -31,11 +31,12 @@ export const PERFORMANCE_RUNS = 10;
 export const PERFORMANCE_RUN_TIMEOUT = 60000;
 
 export const VSCODE_DEV_URL = function (commit: string, quality: Quality) {
+    const prefix = quality === Quality.Insider ? 'insiders.' : quality === Quality.Exploration ? 'exploration.' : '';
     if (CONFIG.token) {
-        return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
+        return `https://${prefix}vscode.dev/github/microsoft/vscode/blob/main/package.json?vscode-version=${commit}`; // with auth state, we can use `github` route
     }
 
-    return `https://${quality === Quality.Insider ? 'insiders.' : ''}vscode.dev/?vscode-version=${commit}`;
+    return `https://${prefix}vscode.dev/?vscode-version=${commit}`;
 }
 
 export enum Arch {
@@ -101,7 +102,8 @@ export function runtimeFromString(value: unknown): Runtime {
 
 export enum Quality {
     Insider = 'insider',
-    Stable = 'stable'
+    Stable = 'stable',
+    Exploration = 'exploration'
 }
 
 export function qualityFromString(value: unknown): Quality {
@@ -110,12 +112,30 @@ export function qualityFromString(value: unknown): Quality {
             return Quality.Stable;
         case 'insider':
             return Quality.Insider;
+        case 'exploration':
+            return Quality.Exploration;
         default: {
             if (typeof value === 'string') {
                 throw new Error(`Unknown quality: ${value}`);
             }
             return Quality.Insider;
         }
+    }
+}
+
+export function qualityCommandSuffix(quality: Quality): string {
+    switch (quality) {
+        case Quality.Insider: return '-insiders';
+        case Quality.Exploration: return '-exploration';
+        case Quality.Stable: return '';
+    }
+}
+
+export function qualityDisplayLabel(quality: Quality): string | undefined {
+    switch (quality) {
+        case Quality.Insider: return 'Insiders';
+        case Quality.Exploration: return 'Exploration';
+        case Quality.Stable: return undefined;
     }
 }
 
