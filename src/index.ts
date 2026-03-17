@@ -32,6 +32,7 @@ export default async function main(argv: string[]): Promise<void> {
             exclude?: string[];
             releasedOnly?: boolean;
             sanity?: boolean;
+            exploration?: boolean;
             verbose?: boolean;
             reset?: boolean;
             perf?: boolean | string;
@@ -54,6 +55,7 @@ export default async function main(argv: string[]): Promise<void> {
             .addOption(new Option('-p, --perf [path]', 'runs a performance test and optionally writes the result to the provided path').hideHelp())
             .addOption(new Option('-t, --token <token>', `a GitHub token of scopes 'repo', 'workflow', 'user:email', 'read:user' to enable additional performance tests targetting web`).hideHelp())
             .option('-s, --sanity', 'runs multiple flavors of a build for sanity testing purposes (requires --commit with a commit hash)')
+            .option('-e, --exploration', 'runs multiple flavors of an insider build for exploration testing purposes (requires --commit with a commit hash)')
             .option('--verbose', 'logs verbose output to the console when errors occur');
 
         program.addHelpText('after', `
@@ -78,6 +80,12 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
         if (opts.sanity) {
             if (opts.perf || opts.good || opts.bad || !opts.commit || opts.commit === 'latest') {
                 throw new Error(`Sanity testing requires a specific commit to be set via ${chalk.green('--commit')}.`);
+            }
+        }
+
+        if (opts.exploration) {
+            if (opts.perf || opts.good || opts.bad || !opts.commit || opts.commit === 'latest') {
+                throw new Error(`Exploration testing requires a specific commit to be set via ${chalk.green('--commit')}.`);
             }
         }
 
@@ -173,6 +181,11 @@ ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
         // Sanity testing: launch all flavors for the specified commit
         if (opts.sanity && opts.commit) {
             await sanity.testAllFlavors(opts.commit);
+        }
+
+        // Exploration testing: launch all flavors for the specified insider commit
+        else if (opts.exploration && opts.commit) {
+            await sanity.testAllFlavors(opts.commit, Quality.Insider);
         }
 
         // Commit provided: launch only that commit
