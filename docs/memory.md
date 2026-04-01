@@ -76,6 +76,7 @@ This document serves as a quick reference for understanding what each important 
   - Process management with proper cleanup
   - Platform-specific executable path resolution
   - Command-line argument construction for different runtimes
+  - Supports passthrough of additional arguments to VSCode via CONFIG.args
   - Background process handling for long-running instances
 
 ### `src/constants.ts`
@@ -86,7 +87,7 @@ This document serves as a quick reference for understanding what each important 
   - Runtime type definitions (Desktop, Web Local, Web Remote)
   - Performance testing configuration
   - VSCode.dev URL construction
-  - Global configuration object (CONFIG)
+  - Global configuration object (CONFIG) including performance, token, and passthrough args
 
 ### `src/git.ts`
 - **Purpose**: Git repository management for VSCode source

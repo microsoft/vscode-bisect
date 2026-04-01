@@ -504,6 +504,10 @@ class Launcher {
             );
         }
 
+        if (CONFIG.args.length > 0) {
+            args.push(...CONFIG.args);
+        }
+
         return spawn(executable, args);
     }
 
