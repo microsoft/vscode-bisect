@@ -7,7 +7,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import { builds, IBuildKind } from '../builds.js';
-import { Flavor, Platform, platform, Quality, Runtime, setTesting } from '../constants.js';
+import { CONFIG, Flavor, Platform, platform, Quality, Runtime, setTesting } from '../constants.js';
 
 setTesting(true);
 
@@ -90,5 +90,18 @@ describe('Integration tests', () => {
         // Verify we have fewer builds than before
         assert.ok(filteredBuilds.length < allBuilds.length, 'Expected filtered builds to have fewer items than all builds');
         assert.ok(filteredBuilds.length === allBuilds.length - excludeCommits.length, 'Expected exactly 2 fewer builds after excluding 2 commits');
+    });
+
+    test('CONFIG.args defaults to empty and can hold passthrough arguments', () => {
+        const original = [...CONFIG.args];
+        try {
+            assert.deepStrictEqual(CONFIG.args, [], 'Expected CONFIG.args to default to empty array');
+
+            CONFIG.args = ['--enable-proposed-api', '--agents'];
+            assert.deepStrictEqual(CONFIG.args, ['--enable-proposed-api', '--agents']);
+            assert.strictEqual(CONFIG.args.length, 2);
+        } finally {
+            CONFIG.args = original;
+        }
     });
 });

@@ -56,13 +56,21 @@ export default async function main(argv: string[]): Promise<void> {
             .option('-s, --sanity', 'runs multiple flavors of a build for sanity testing purposes (requires --commit with a commit hash)')
             .option('--verbose', 'logs verbose output to the console when errors occur');
 
+        program.enablePositionalOptions();
+        program.passThroughOptions();
+        program.argument('[args...]', 'additional arguments to pass to VSCode (use -- to separate)');
+
         program.addHelpText('after', `
 ${chalk.bold('Note:')} if no commit is specified, the last 200 builds will be bisected. Use ${chalk.green('\'--releasedOnly\'')} to only consider released builds for testing older builds.
+
+${chalk.bold('Pass arguments to VSCode:')} use ${chalk.green('--')} to separate, e.g. ${chalk.green('vscode-bisect --commit latest -- --enable-proposed-api')}
 
 ${chalk.bold('Storage:')} ${chalk.green(BUILD_FOLDER)}
     `);
 
-        const opts: Opts = program.parse(argv).opts();
+        const parsed = program.parse(argv);
+        const opts: Opts = parsed.opts();
+        CONFIG.args = parsed.args;
 
         if (opts.verbose) {
             LOGGER.verbose = true;

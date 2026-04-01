@@ -195,6 +195,7 @@ export const LOGGER = {
 export const CONFIG = {
     performance: false as boolean | string,
     token: undefined as string | undefined,
+    args: [] as string[],
 }
 
 export function logTroubleshoot(): void {
