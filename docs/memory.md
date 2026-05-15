@@ -147,7 +147,7 @@ This document serves as a quick reference for understanding what each important 
 - **Key Details**:
   - Installation instructions via npx
   - Basic usage examples
-  - Requirements (Node.js ≥20)
+  - Requirements (Node.js ≥22)
   - Link to help command
 
 ### `docs/memory.md` (this file)

@@ -120,7 +120,7 @@ VSCode Bisect is a command-line tool that implements binary search (bisecting) f
 ## Dependencies & Ecosystem
 
 ### **Core Dependencies**
-- Node.js ≥20 required (updated from ≥16)
+- Node.js ≥22 required
 - TypeScript for type safety and modern JS features
 - Node.js built-in test runner for automated testing
 - Platform-specific utilities (unzip, process management)
